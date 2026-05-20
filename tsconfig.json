@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                          /* Modern JS output target */
+    "module": "NodeNext",                          /* Native Node.js ESM imports/exports */
+    "moduleResolution": "NodeNext",                /* Resolve imports correctly in ESM */
+    "outDir": "./dist",                            /* Compiled JS files yahan jayenge */
+    "rootDir": "./src",                            /* TypeScript source files ka main folder */
+    "strict": true,                                /* strict typing enable karein (No implicit any) */
+    "esModuleInterop": true,                      /* CommonJS aur ESM modules compatibility */
+    "skipLibCheck": true,                          /* External libraries checking skip karein speed ke liye */
+    "forceConsistentCasingInFileNames": true ,
+    "types": ["node"]      /* Casing errors se bachne ke liye */
+  },
+  "include": ["src/**/*"]
+}
