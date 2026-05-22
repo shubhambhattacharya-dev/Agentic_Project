@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.js";
 
+
 const app = express();
 
 // 1. Security headers injection
@@ -20,7 +21,10 @@ app.use(
 // 3. Parse JSON body securely
 app.use(express.json({ limit: "10kb" }));
 
-// 4. Health Check Endpoint
+// 4. Register Domain Routes
+
+
+// 5. Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -29,7 +33,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// 5. Global Error Handler Middleware
+// 6. Global Error Handler Middleware
 app.use(errorHandler as any);
 
 // 6. Start Server
