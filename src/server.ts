@@ -1,16 +1,30 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.js";
-
+import { logger } from "./config/logger.js";
 
 const app = express();
 
 // 1. Security headers injection
 app.use(helmet());
 
-// 2. CORS configuration
+// 2. Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: "Too many requests from this IP, please try again after 15 minutes",
+  },
+});
+app.use(limiter);
+
+// 3. CORS configuration
 app.use(
   cors({
     origin: env.ALLOWED_ORIGINS === "*" ? "*" : env.ALLOWED_ORIGINS.split(","),
@@ -18,13 +32,12 @@ app.use(
   })
 );
 
-// 3. Parse JSON body securely
+// 4. Parse JSON body securely
 app.use(express.json({ limit: "10kb" }));
 
-// 4. Register Domain Routes
+// 5. Register Domain Routes
 
-
-// 5. Health Check Endpoint
+// 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -33,24 +46,24 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// 6. Global Error Handler Middleware
-app.use(errorHandler as any);
+// 7. Global Error Handler Middleware
+app.use(errorHandler);
 
-// 6. Start Server
+// 8. Start Server
 const server = app.listen(env.PORT, () => {
-  console.log(`🚀 Server running in [${env.NODE_ENV}] mode on http://localhost:${env.PORT}`);
+  logger.info(`🚀 Server running in [${env.NODE_ENV}] mode on http://localhost:${env.PORT}`);
 });
 
-// 7. Graceful Shutdown
+// 9. Graceful Shutdown
 const shutdown = () => {
-  console.log("Shutting down server gracefully...");
+  logger.info("Shutting down server gracefully...");
   server.close(() => {
-    console.log("Server closed. Active connections finished.");
+    logger.info("Server closed. Active connections finished.");
     process.exit(0);
   });
 
   setTimeout(() => {
-    console.error("Forceful shutdown initiated.");
+    logger.error("Forceful shutdown initiated.");
     process.exit(1);
   }, 10000);
 };

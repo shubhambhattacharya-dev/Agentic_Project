@@ -1,21 +1,16 @@
-import{Request,Response,NextFunction} from "express";
+import { ErrorRequestHandler } from "express";
+import { logger } from "../config/logger.js";
 
-
-export interface AppError extends Error{
-    statusCode?:number;
+export interface AppError extends Error {
+  statusCode?: number;
 }
 
-export const errorHandler=(
-    err:AppError,
-    req:Request,
-    res:Response,
-    next:NextFunction
-)=>{
-    console.error("[SERVER ERROR]:",err.stack|| err.message);
-    const statusCode=err.statusCode || 500;
+export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, next) => {
+  logger.error(err, `[SERVER ERROR]: ${err.message}`);
+  const statusCode = err.statusCode || 500;
 
-    return res.status(statusCode).json({
-        success:false,
-        error:err.message || "Internal Server Error"
-    })
-}
+  res.status(statusCode).json({
+    success: false,
+    error: err.message || "Internal Server Error",
+  });
+};

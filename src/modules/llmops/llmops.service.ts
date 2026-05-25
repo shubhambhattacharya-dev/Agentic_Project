@@ -2,9 +2,10 @@
 
 import { get_encoding } from "tiktoken";
 import { z } from "zod";
+import { logger } from "../../config/logger.js";
 
 // 🚀 Production Rule 1: Dollar to INR Exchange Rate
-const USD_TO_INR = 83;
+const USD_TO_INR = 85;
 
 // 🚀 Production Rule 2: Pricing Table (per 1 Million tokens in USD)
 const PRICING: Record<string, { input: number; output: number }> = {
@@ -14,7 +15,7 @@ const PRICING: Record<string, { input: number; output: number }> = {
   "default": { input: 0.59, output: 0.79 },
 };
 
-// 🚀 Upgraded Zod Schema for Token Metrics (Your Suggestion!)
+// 🚀 Upgraded Zod Schema for Token Metrics
 export const TokenUsageReportSchema = z.object({
   promptTokens: z.number().int().nonnegative("Input tokens cannot be negative"),
   completionTokens: z.number().int().nonnegative("Output tokens cannot be negative"),
@@ -84,14 +85,19 @@ export function logLLMUsage(
   const report = calculateCost(model, promptTokens, completionTokens);
   const typeLabel = isEstimate ? "ESTIMATE" : "ACTUAL";
   
-  console.log(`\n=================== 📊 LLMOps Metrics [${typeLabel}] ===================`);
-  console.log(`🤖 Model:          ${model}`);
-  console.log(`📥 Input Tokens:   ${report.promptTokens}`);
-  console.log(`📤 Output Tokens:  ${report.completionTokens}`);
-  console.log(`🔢 Total Tokens:   ${report.totalTokens}`);
-  console.log(`💲 Cost (USD):     $${report.costUSD.toFixed(6)}`);
-  console.log(`🇮🇳 Cost (INR):     ₹${report.costINR.toFixed(4)}`);
-  console.log(`=================================================================\n`);
+  logger.info(
+    {
+      metrics: {
+        model,
+        promptTokens: report.promptTokens,
+        completionTokens: report.completionTokens,
+        totalTokens: report.totalTokens,
+        costUSD: report.costUSD,
+        costINR: report.costINR,
+      },
+    },
+    `📊 LLMOps Metrics [${typeLabel}] - ${model} consumption calculated`
+  );
 
   return report;
 }
