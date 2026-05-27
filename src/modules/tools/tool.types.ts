@@ -49,3 +49,4 @@ export type ToolParameters = z.infer<typeof ToolParametersSchema>;
 export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
 export type AIToolCall = z.infer<typeof AIToolCallSchema>;
 export type ToolExecutionResult = z.infer<typeof ToolExecutionResultSchema>;
+
