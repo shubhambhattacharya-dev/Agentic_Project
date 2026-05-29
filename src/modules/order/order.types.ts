@@ -4,8 +4,8 @@ import { z } from "zod";
 
 // 1. Order Status Schema & Type
 export const OrderStatusSchema = z.enum([
-  "PENDING",
-  "PROCESSING",
+  "PLACED",
+  "PACKED",
   "SHIPPED",
   "DELIVERED",
   "CANCELLED",
@@ -33,7 +33,9 @@ export type OrderItem = z.infer<typeof OrderItemSchema>;
 // 4. Full Order Schema & Type
 export const OrderSchema = z.object({
   id: z.string(),
-  customerName: z.string(),
+  customerName: z.string().optional(),
+  customerEmail: z.string().email().optional(),
+  customerId: z.string().optional(),
   items: z.array(OrderItemSchema),
   totalAmount: z.number().nonnegative(),
   status: OrderStatusSchema,
