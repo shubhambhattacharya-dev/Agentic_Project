@@ -7,7 +7,6 @@ import { logger } from "../../config/logger.js";
 // 🚀 Production Rule 1: Dollar to INR Exchange Rate
 const USD_TO_INR = 85;
 
-// 🚀 Production Rule 2: Pricing Table (per 1 Million tokens in USD)
 const PRICING: Record<string, { input: number; output: number }> = {
   "llama-3.3-70b-versatile": { input: 0.59, output: 0.79 },
   "llama-3.3-8b-instant": { input: 0.05, output: 0.08 },
@@ -15,7 +14,7 @@ const PRICING: Record<string, { input: number; output: number }> = {
   "default": { input: 0.59, output: 0.79 },
 };
 
-// 🚀 Upgraded Zod Schema for Token Metrics
+
 export const TokenUsageReportSchema = z.object({
   promptTokens: z.number().int().nonnegative("Input tokens cannot be negative"),
   completionTokens: z.number().int().nonnegative("Output tokens cannot be negative"),
@@ -26,9 +25,7 @@ export const TokenUsageReportSchema = z.object({
 
 export type TokenUsageReport = z.infer<typeof TokenUsageReportSchema>;
 
-/**
- * Local Token Counter using tiktoken
- */
+
 export function countTokensLocal(text: string): number {
   const encoder = get_encoding("cl100k_base");
   try {
@@ -39,9 +36,7 @@ export function countTokensLocal(text: string): number {
   }
 }
 
-/**
- * Calculates financial costs based on token count and validates via Zod
- */
+
 export function calculateCost(
   model: string,
   promptTokens: number,
