@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { toolRegistry } from './tool.registry.js';
 import { cancelOrder, processRefund, getOrderById } from '../order/order.service.js';
-import { ToolDefinition, ToolSecurityError } from './tool.types.js';
+import { ToolDefinition } from './tool.types.js';
 import { logger } from '../../config/logger.js';
 
 // 1. Define specifications
@@ -25,13 +25,15 @@ const processRefundDef: ToolDefinition = {
   type: "function",
   function: {
     name: "processRefund",
-    description: "Process a refund for a D2C order by its ID.",
+    description: "Process a refund for a D2C order by its ID, refund reason, and damage claim status.",
     parameters: {
       type: "object",
       properties: {
         id: { type: "string", description: "Order ID (e.g. gigi-101)" },
+        reason: { type: "string", description: "Customer-provided refund reason." },
+        damageClaim: { type: "boolean", description: "True if the customer says the item was damaged." },
       },
-      required: ["id"],
+      required: ["id", "reason", "damageClaim"],
     },
   },
 };
@@ -58,6 +60,8 @@ const CancelOrderArgsSchema = z.object({
 
 const ProcessRefundArgsSchema = z.object({
   id: z.string().min(1, "Order ID cannot be empty"),
+  reason: z.string().trim().min(1, "Refund reason cannot be empty"),
+  damageClaim: z.boolean(),
 });
 
 const GetOrderArgsSchema = z.object({
@@ -84,11 +88,7 @@ export function initializeTools(): void {
     definition: processRefundDef,
     schema: ProcessRefundArgsSchema,
     handler: async (args) => {
-      // Custom security boundary rule: limit is ₹200. Order gigi-101 total is ₹240.
-      if (args.id === "gigi-101") {
-        throw new ToolSecurityError("Refund amount exceeds auto-limit of ₹200. Order total is ₹240.");
-      }
-      return processRefund(args.id);
+      return processRefund(args.id, args.reason, args.damageClaim);
     },
   });
 
