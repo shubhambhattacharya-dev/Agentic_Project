@@ -104,3 +104,22 @@ Launch the Express server and local SQLite database:
 npm run dev
 ```
 Open `http://localhost:5000` in your web browser to access the beautiful SaaS operational dashboard, pending refunds HITL Desk, and interactive Chat Sandbox!
+
+### 4. Send a Chat Request
+Use strict JSON in the request body. Property names must be wrapped in double quotes.
+
+Simple single-message request:
+
+```bash
+curl -X POST http://localhost:5000/api/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"Where is my order?\"}"
+```
+
+Full conversation-history request:
+
+```bash
+curl -X POST http://localhost:5000/api/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"messages\":[{\"role\":\"user\",\"content\":\"Where is my order?\"}]}"
+```
