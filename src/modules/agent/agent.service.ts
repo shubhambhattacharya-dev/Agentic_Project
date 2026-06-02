@@ -1,14 +1,14 @@
-import Groq from 'groq-sdk';
-import { ToolRegistry } from '../tools/tool.registry.js';
+﻿import { ToolRegistry, ToolContext } from '../tools/tool.registry.js';
 import { ChatMessage } from './agent.types.js';
 import { logLLMUsage } from '../llmops/llmops.service.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
+import { groq } from '../ai/ai.service.js';
+
 
 export class AgentService {
 
     private toolRegistry: ToolRegistry;
-    private client: Groq;
     private model: string;
     private maxIterations: number;
 
@@ -115,16 +115,12 @@ You MUST refuse ALL other requests politely.
 
         this.maxIterations = 10;
 
-        this.client = new Groq({
-            apiKey: env.GROQ_API
-        });
-
         logger.info('AgentService initialized');
     }
 
     public async run(options: {
         sessionId?: string;
-        customerContext?: Record<string, unknown>;
+        customerContext?: ToolContext;
         messages: ChatMessage[];
     }): Promise<{
         message: string;
@@ -195,8 +191,8 @@ You MUST refuse ALL other requests politely.
             try {
 
                 chatCompletion =
-                    await this.client.chat.completions.create({
-                        model: currentModel,
+                    await groq.chat.completions.create({
+                        model: this.model,
                         messages: messageHistory,
                         tools: hasTools
                             ? toolsDefinition
@@ -221,7 +217,7 @@ You MUST refuse ALL other requests politely.
                 try {
 
                     chatCompletion =
-                        await this.client.chat.completions.create({
+                        await groq.chat.completions.create({
                             model: fallbackModel,
                             messages: messageHistory,
                             tools: hasTools
@@ -247,13 +243,13 @@ You MUST refuse ALL other requests politely.
                     );
 
                     return {
-                        message: "AI service unavailable.Please try again later",
+                        message: "AI service unavailable. Please try again later",
                         messageHistory
                     };
                 }
             }
 
-            // Bug Fix: Null-safe access to Groq response
+            // Null-safe access to Groq response
             const firstChoice = chatCompletion.choices[0];
             if (!firstChoice?.message) {
                 logger.error('Groq returned empty response');
@@ -274,9 +270,8 @@ You MUST refuse ALL other requests politely.
                 );
             }
 
-            // Explicit mapping — no unsafe 'as' casts
             const assistantToolCalls = assistantMessage.tool_calls?.length
-                ? assistantMessage.tool_calls.map(tc => ({
+                ? assistantMessage.tool_calls.map((tc: { id: string; function: { name: string; arguments: string } }) => ({
                       id: tc.id,
                       type: 'function' as const,
                       function: {
@@ -293,7 +288,7 @@ You MUST refuse ALL other requests politely.
             };
             messageHistory.push(mappedAssistant);
 
-            // Bug Fix: Array.isArray handles null, undefined, and non-array safely
+            // Array.isArray handles null, undefined, and non-array safely
             const toolCalls = assistantMessage.tool_calls;
             const hasToolCalls =
                 Array.isArray(toolCalls) &&
@@ -313,14 +308,15 @@ You MUST refuse ALL other requests politely.
                         `Tool called: ${toolName} with args: ${toolArgs}`
                     );
 
-                    // execute tool
+                    // Execute tool WITH authenticated context
                     const result =
                         await this.toolRegistry.executeTool(
                             toolName,
-                            toolArgs
+                            toolArgs,
+                            customerContext  // Pass auth context for ownership checks
                         );
 
-                    // append tool response — typed properly, no cast needed
+                    // Append tool response
                     const toolMessage: ChatMessage = {
                         role: 'tool',
                         content: JSON.stringify(result),

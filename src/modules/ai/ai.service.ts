@@ -36,13 +36,9 @@ export async function generateStructuredOutput<T>({
   maxTokens = 1000,
 }: StructuredOutputOptions<T>): Promise<T> {
   
-  // 🚀 Production Rule 4: Type-Safe Schema Description Injection in Prompt (No 'as any' cast)
-  let schemaDescription = "";
-  if (schema instanceof z.ZodObject) {
-    schemaDescription = JSON.stringify(schema.shape);
-  } else {
-    schemaDescription = JSON.stringify(schema);
-  }
+  const schemaDescription = schema instanceof z.ZodObject
+    ? JSON.stringify(schema.shape)
+    : JSON.stringify(schema);
 
   const jsonSystemPrompt = `${systemPrompt}
   
@@ -98,7 +94,7 @@ Expected JSON Structure Schema: ${schemaDescription}`;
       parsedJson = JSON.parse(content);
     } catch (parseErr) {
       logger.error({ content }, "❌ Failed to parse JSON string returned by LLM");
-      throw new Error(`LLM output was not valid JSON: ${(parseErr as Error).message}`);
+      throw new Error(`LLM output was not valid JSON: ${(parseErr as Error).message}`, { cause: parseErr });
     }
 
     // 🚀 Production Rule 7: Strict Runtime Validation using safeParse()
@@ -115,6 +111,6 @@ Expected JSON Structure Schema: ${schemaDescription}`;
 
   } catch (error) {
     logger.error(error, "Error inside generateStructuredOutput");
-    throw error;
+    throw new Error("Failed to generate structured output", { cause: error });
   }
-}
+  }

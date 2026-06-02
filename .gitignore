@@ -7,8 +7,10 @@ node_modules/
 
 # Compiled Output (Generated code)
 dist/
+*.tsbuildinfo
 
 # Logs & temp files
 *.log
 npm-debug.log*
 .DS_Store
+/src/generated/prisma
