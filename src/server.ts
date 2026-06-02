@@ -5,10 +5,8 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.js";
 import { logger } from "./config/logger.js";
+import chatRoute from "./routes/chat.routes.js";
 import { initializeTools } from "./modules/tools/tool.init.js";
-import chatRoutes from "./routes/chat.routes.js";
-
-
 
 const app = express();
 
@@ -37,15 +35,15 @@ app.use(
 );
 
 // 4. Parse JSON body securely
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "100kb" }));
 
-// 5. Register Domain Routes
-
+// 5. Initialize services at startup
 initializeTools();
 
-app.use("/api",chatRoutes);
+// 6. Register Domain Routes
+app.use("/api", chatRoute);
 
-// 6. Health Check Endpoint
+// 7. Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,

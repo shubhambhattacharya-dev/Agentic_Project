@@ -1,14 +1,14 @@
-import Groq from 'groq-sdk';
 import { ToolRegistry } from '../tools/tool.registry.js';
 import { ChatMessage } from './agent.types.js';
 import { logLLMUsage } from '../llmops/llmops.service.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
+import { groq } from '../ai/ai.service.js';
+
 
 export class AgentService {
 
     private toolRegistry: ToolRegistry;
-    private client: Groq;
     private model: string;
     private maxIterations: number;
 
@@ -115,10 +115,6 @@ You MUST refuse ALL other requests politely.
 
         this.maxIterations = 10;
 
-        this.client = new Groq({
-            apiKey: env.GROQ_API
-        });
-
         logger.info('AgentService initialized');
     }
 
@@ -195,7 +191,7 @@ You MUST refuse ALL other requests politely.
             try {
 
                 chatCompletion =
-                    await this.client.chat.completions.create({
+                    await groq.chat.completions.create({
                         model: currentModel,
                         messages: messageHistory,
                         tools: hasTools
@@ -221,7 +217,7 @@ You MUST refuse ALL other requests politely.
                 try {
 
                     chatCompletion =
-                        await this.client.chat.completions.create({
+                        await groq.chat.completions.create({
                             model: fallbackModel,
                             messages: messageHistory,
                             tools: hasTools
@@ -274,9 +270,8 @@ You MUST refuse ALL other requests politely.
                 );
             }
 
-            // Explicit mapping — no unsafe 'as' casts
             const assistantToolCalls = assistantMessage.tool_calls?.length
-                ? assistantMessage.tool_calls.map(tc => ({
+                ? assistantMessage.tool_calls.map((tc: { id: string; function: { name: string; arguments: string } }) => ({
                       id: tc.id,
                       type: 'function' as const,
                       function: {
