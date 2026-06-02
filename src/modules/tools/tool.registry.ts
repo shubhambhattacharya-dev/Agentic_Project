@@ -29,7 +29,7 @@ export class ToolRegistry {
       throw new ToolSecurityError(`Tool with name "${name}" is already registered.`); 
     }
 
-    this.tools.set(name, { definition, schema, handler });
+    this.tools.set(name, { definition, schema, handler: handler as (args: unknown) => Promise<unknown> });
     logger.info(`Tool successfully registered: ${name}`);
   }
 

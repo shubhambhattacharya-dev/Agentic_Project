@@ -62,7 +62,7 @@ toolRegistry.registerTool({
     if (args.id === "gigi-101") {
       throw new ToolSecurityError("Refund amount exceeds auto-limit of ₹200. Order total is ₹240.");
     }
-    return processRefund(args.id);
+    return processRefund(args.id, "Damaged item", true);
   },
 });
 

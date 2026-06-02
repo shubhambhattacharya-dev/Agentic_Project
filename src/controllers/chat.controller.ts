@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { AgentService } from "../modules/agent/agent.service.js";
 import { toolRegistry } from "../modules/tools/tool.registry.js";
+import type { ChatMessage } from "../modules/agent/agent.types.js";
 
 import { z } from "zod";
 import { logger } from "../config/logger.js";
@@ -21,7 +22,7 @@ export async function chatController(req: Request, res: Response) {
     });
   }
 
-  const messages = [
+  const messages: ChatMessage[] = [
     {
       role: "user",
       content: validation.data.message,

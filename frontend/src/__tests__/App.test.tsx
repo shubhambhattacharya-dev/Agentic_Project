@@ -128,7 +128,7 @@ describe("Gigi Storefront DOM Tests", () => {
 
     // Check header logo and cart
     expect(screen.getByRole("link", { name: /Gigi home/i })).toBeInTheDocument();
-    expect(document.querySelector(".cart-button")).toBeInTheDocument();
+    expect(document.querySelector(".cart-button") as HTMLElement).toBeInTheDocument();
 
     // Check product headings
     expect(screen.getByRole("heading", { name: "Lemon Lime" })).toBeInTheDocument();
@@ -148,7 +148,7 @@ describe("Gigi Storefront DOM Tests", () => {
     });
 
     // Find the Lemon Lime product card container
-    const lemonLimeCard = screen.getByRole("heading", { name: "Lemon Lime" }).closest(".product-card")!;
+    const lemonLimeCard = screen.getByRole("heading", { name: "Lemon Lime" }).closest(".product-card") as HTMLElement;
     expect(lemonLimeCard).toBeInTheDocument();
 
     // Default option is "One can" showing price Rs. 125
@@ -171,11 +171,11 @@ describe("Gigi Storefront DOM Tests", () => {
     });
 
     // Verify initial cart button doesn't show quantity count
-    const headerCartBtn = document.querySelector(".cart-button")!;
+    const headerCartBtn = document.querySelector(".cart-button") as HTMLElement;
     expect(headerCartBtn.querySelector("em")).toBeNull();
 
     // Find Lemon Lime card and add to cart
-    const lemonLimeCard = screen.getByRole("heading", { name: "Lemon Lime" }).closest(".product-card")!;
+    const lemonLimeCard = screen.getByRole("heading", { name: "Lemon Lime" }).closest(".product-card") as HTMLElement;
     const addToCartBtn = within(lemonLimeCard).getByRole("button", { name: /Add to Cart/i });
     fireEvent.click(addToCartBtn);
 
@@ -227,7 +227,7 @@ describe("Gigi Storefront DOM Tests", () => {
       expect(screen.queryByText("Loading storefront...")).not.toBeInTheDocument();
     });
 
-    const searchOverlay = screen.getByPlaceholderText("Search flavours, events, distributors...").closest(".search-overlay")!;
+    const searchOverlay = screen.getByPlaceholderText("Search flavours, events, distributors...").closest(".search-overlay") as HTMLElement;
     expect(searchOverlay).not.toHaveClass("is-open");
 
     // Click the Search button in header
