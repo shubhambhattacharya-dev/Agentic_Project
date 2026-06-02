@@ -1,19 +1,26 @@
-// src/modules/tools/tool.registry.ts
+﻿// src/modules/tools/tool.registry.ts
 import { z, ZodIssue } from 'zod';
 import { ToolDefinition, ToolExecutionResult, ToolSecurityError } from './tool.types.js';
 import { logger } from '../../config/logger.js';
 
+// Context passed to tool handlers from authenticated request
+export interface ToolContext {
+  customerId?: string;
+  customerEmail?: string;
+  role?: "customer" | "admin";
+}
+
 export interface RegisterToolOptions<T extends z.ZodTypeAny> {
   definition: ToolDefinition;
   schema: T;
-  handler: (args: z.infer<T>) => Promise<unknown>;
+  handler: (args: z.infer<T>, context?: ToolContext) => Promise<unknown>;
 }
 
 export class ToolRegistry {
   private tools = new Map<string, {
     definition: ToolDefinition;
     schema: z.ZodTypeAny;
-    handler: (args: unknown) => Promise<unknown>;
+    handler: (args: unknown, context?: ToolContext) => Promise<unknown>;
   }>();
 
   constructor() {
@@ -29,7 +36,7 @@ export class ToolRegistry {
       throw new ToolSecurityError(`Tool with name "${name}" is already registered.`); 
     }
 
-    this.tools.set(name, { definition, schema, handler: handler as (args: unknown) => Promise<unknown> });
+    this.tools.set(name, { definition, schema, handler: handler as (args: unknown, context?: ToolContext) => Promise<unknown> });
     logger.info(`Tool successfully registered: ${name}`);
   }
 
@@ -37,7 +44,7 @@ export class ToolRegistry {
     return Array.from(this.tools.values()).map(t => t.definition);
   }
 
-  async executeTool(name: string, argumentsStr: string): Promise<ToolExecutionResult> {
+  async executeTool(name: string, argumentsStr: string, context?: ToolContext): Promise<ToolExecutionResult> {
     const tool = this.tools.get(name);
     if (!tool) {
       logger.error(`Tool not found: ${name}`);
@@ -62,7 +69,9 @@ export class ToolRegistry {
           securityBlocked: false
         };
       }
-      const result = await tool.handler(validation.data);
+      
+      // Pass context to handler for ownership checks
+      const result = await tool.handler(validation.data, context);
       logger.info(`Tool execution successful for ${name}`);
       return {
         success: true,
@@ -91,5 +100,3 @@ export class ToolRegistry {
 }
 
 export const toolRegistry = new ToolRegistry();
-
-

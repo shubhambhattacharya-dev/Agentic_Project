@@ -1,4 +1,5 @@
-import { FormEvent, useMemo, useState } from "react";
+﻿import { FormEvent, useMemo, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FiMessageCircle, FiSend, FiWifi, FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ function createSessionId() {
 }
 
 export function ChatAssistant() {
+  const { getToken } = useAuth();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<UiChatMessage[]>([
@@ -29,7 +31,10 @@ export function ChatAssistant() {
   });
 
   const chat = useMutation({
-    mutationFn: sendChatMessage,
+    mutationFn: async (input: { sessionId: string; messages: UiChatMessage[] }) => {
+      const token = await getToken();
+      return sendChatMessage({ ...input, token: token ?? undefined });
+    },
     onSuccess: (response: { data: { message: string } }) => {
       setMessages((current) => [
         ...current,

@@ -1,4 +1,4 @@
-export type UiChatMessage = {
+﻿export type UiChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
@@ -9,6 +9,8 @@ export type HealthResponse = {
   database?: "connected" | "disconnected";
   message?: string;
   timestamp: string;
+  sentry?: string;
+  clerk?: string;
 };
 
 export type ChatResponse = {
@@ -20,11 +22,13 @@ export type ChatResponse = {
 };
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string>) ?? {}),
+  };
+
   const response = await fetch(path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    headers,
     ...init,
   });
 
@@ -46,9 +50,21 @@ export function getHealth() {
 export function sendChatMessage(input: {
   sessionId: string;
   messages: UiChatMessage[];
+  token?: string;
 }) {
+  const headers: Record<string, string> = {};
+  
+  // Add Clerk auth token if provided
+  if (input.token) {
+    headers["Authorization"] = `Bearer ${input.token}`;
+  }
+
   return apiRequest<ChatResponse>("/api/chat", {
     method: "POST",
-    body: JSON.stringify(input),
+    headers,
+    body: JSON.stringify({
+      sessionId: input.sessionId,
+      messages: input.messages,
+    }),
   });
 }

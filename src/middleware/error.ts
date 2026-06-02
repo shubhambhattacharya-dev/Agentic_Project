@@ -1,4 +1,5 @@
-import { ErrorRequestHandler } from "express";
+﻿import { ErrorRequestHandler } from "express";
+import * as Sentry from "@sentry/node";
 import { logger } from "../config/logger.js";
 import { env } from "../config/env.js";
 
@@ -12,6 +13,11 @@ export interface AppError extends Error {
 
 export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, _next) => {
   logger.error(err, `[SERVER ERROR]: ${err.message}`);
+
+  // Report to Sentry (non-operational errors)
+  if (!err.isOperational) {
+    Sentry.captureException(err);
+  }
 
   const isMalformedJson =
     err instanceof SyntaxError &&

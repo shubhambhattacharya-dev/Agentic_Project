@@ -1,6 +1,6 @@
-// src/modules/tools/tool.init.ts
+﻿// src/modules/tools/tool.init.ts
 import { z } from 'zod';
-import { toolRegistry } from './tool.registry.js';
+import { toolRegistry, ToolContext } from './tool.registry.js';
 import { cancelOrder, processRefund, getOrderById } from '../order/order.service.js';
 import { ToolDefinition } from './tool.types.js';
 import { logger } from '../../config/logger.js';
@@ -70,34 +70,35 @@ const GetOrderArgsSchema = z.object({
 
 /**
  * Initializes and registers all customer support agent tools.
+ * Tools receive authenticated context for ownership validation.
  */
 export function initializeTools(): void {
   logger.info("Initializing and registering tools in registry...");
 
-  // Register cancelOrder
+  // Register cancelOrder — with ownership check
   toolRegistry.registerTool({
     definition: cancelOrderDef,
     schema: CancelOrderArgsSchema,
-    handler: async (args) => {
-      return cancelOrder(args.id);
+    handler: async (args, context?: ToolContext) => {
+      return cancelOrder(args.id, context?.customerId);
     },
   });
 
-  // Register processRefund
+  // Register processRefund — with ownership check
   toolRegistry.registerTool({
     definition: processRefundDef,
     schema: ProcessRefundArgsSchema,
-    handler: async (args) => {
-      return processRefund(args.id, args.reason, args.damageClaim);
+    handler: async (args, context?: ToolContext) => {
+      return processRefund(args.id, args.reason, args.damageClaim, context?.customerId);
     },
   });
 
-  // Register getOrder
+  // Register getOrder — with ownership check
   toolRegistry.registerTool({
     definition: getOrderDef,
     schema: GetOrderArgsSchema,
-    handler: async (args) => {
-      const order = getOrderById(args.id);
+    handler: async (args, context?: ToolContext) => {
+      const order = await getOrderById(args.id, context?.customerId);
       if (!order) return { success: false, error: `Order ${args.id} not found.` };
       return { success: true, order };
     },

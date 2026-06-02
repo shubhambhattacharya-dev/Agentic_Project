@@ -5,6 +5,12 @@ import { toolRegistry } from '../modules/tools/tool.registry.js';
 import { ChatMessageSchema } from '../modules/agent/agent.types.js';
 import { logger } from '../config/logger.js';
 
+// Extended request type with Clerk auth fields
+interface AuthenticatedRequest extends Request {
+  userId?: string;
+  userEmail?: string;
+}
+
 const ChatMessageInputSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string().min(1, 'Message content cannot be empty').max(4000, 'Message exceeds maximum length'),
@@ -13,7 +19,6 @@ const ChatMessageInputSchema = z.object({
 const ChatRequestBodySchema = z.object({
   sessionId: z.string().min(1).max(256),
   messages: z.array(ChatMessageInputSchema).min(1, 'At least one message is required').max(50, 'Too many messages'),
-  customerEmail: z.string().email('Invalid email format').optional(),
 });
 
 export async function chatController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -29,13 +34,29 @@ export async function chatController(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { messages, sessionId, customerEmail } = parsed.data;
+    const { messages, sessionId } = parsed.data;
+
+    // Get authenticated user info from Clerk middleware
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId;
+    const userEmail = authReq.userEmail;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: "Authentication required. Please sign in.",
+      });
+      return;
+    }
 
     const agent = new AgentService(toolRegistry);
 
-    const customerContext = customerEmail
-      ? { customerId: '', customerEmail, role: 'customer' as const }
-      : undefined;
+    // Trusted backend context from Clerk auth (NOT from user input)
+    const customerContext = {
+      customerId: userId,
+      customerEmail: userEmail ?? 'unknown',
+      role: 'customer' as const,
+    };
 
     // Map frontend messages to agent ChatMessage format
     const agentMessages = messages.map((m) =>
@@ -51,7 +72,7 @@ export async function chatController(req: Request, res: Response, next: NextFunc
     const latencyMs = Date.now() - startTime;
 
     logger.info(
-      { sessionId, customerEmail, latencyMs },
+      { sessionId, userId, userEmail, latencyMs },
       'Chat request completed'
     );
 
