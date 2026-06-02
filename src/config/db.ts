@@ -13,7 +13,7 @@ const pool = new pg.Pool({
 const adapter = new PrismaPg(pool);
 
 // 3. Initialize Prisma Client with the adapter
-export const prisma = new PrismaClient({ adapter } as any);
+export const prisma = new PrismaClient({ adapter });
 
 // Test the database connection on startup
 export const connectDB = async () => {

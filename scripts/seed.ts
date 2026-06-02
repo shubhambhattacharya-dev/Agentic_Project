@@ -7,7 +7,7 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL 
 });
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter } as any);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Starting database seeding...');

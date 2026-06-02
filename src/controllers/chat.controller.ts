@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { AgentService } from "../modules/agent/agent.service.js";
 import { toolRegistry } from "../modules/tools/tool.registry.js";
 
@@ -10,7 +11,7 @@ const ChatRequestSchema = z.object({
   message: z.string().min(1, "Message cannot be empty"),
 });
 
-export async function chatController(req: any, res: any) {
+export async function chatController(req: Request, res: Response) {
   const validation = ChatRequestSchema.safeParse(req.body);
 
   if (!validation.success) {
@@ -34,7 +35,7 @@ export async function chatController(req: any, res: any) {
       success: true,
       reply: result.message,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error(error, "Agent run failed");
 
     return res.status(500).json({
