@@ -5,6 +5,10 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error.js";
 import { logger } from "./config/logger.js";
+import { initializeTools } from "./modules/tools/tool.init.js";
+import chatRoutes from "./routes/chat.routes.js";
+
+
 
 const app = express();
 
@@ -37,6 +41,10 @@ app.use(express.json({ limit: "10kb" }));
 
 // 5. Register Domain Routes
 
+initializeTools();
+
+app.use("/api",chatRoutes);
+
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -45,6 +53,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
 
 // 7. Global Error Handler Middleware
 app.use(errorHandler);
