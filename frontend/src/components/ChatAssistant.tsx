@@ -1,4 +1,4 @@
-﻿import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FiMessageCircle, FiSend, FiWifi, FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";

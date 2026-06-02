@@ -1,4 +1,4 @@
-﻿export type UiChatMessage = {
+export type UiChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
