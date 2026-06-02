@@ -27,6 +27,12 @@ jobs:
 
     env:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
+      GROQ_API: "gsk_test_dummy_key_for_ci"
+      GROQ_MODEL_LLM: "llama-3.3-70b-versatile"
+      GROQ_MODEL_SLM: "llama-3.1-8b-instant"
+      NODE_ENV: "test"
+      ALLOWED_ORIGINS: "*"
+      LOG_LEVEL: "silent"
 
     steps:
       - name: Checkout code
