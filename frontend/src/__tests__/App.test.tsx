@@ -232,13 +232,12 @@ describe("Gigi Storefront DOM Tests", () => {
     expect(searchOverlay).toBeInTheDocument();
     expect(searchOverlay).not.toHaveClass("is-open");
 
-    // Suggestions are always in the DOM
-    expect(screen.getByText("Lemon Lime")).toBeInTheDocument();
-    expect(screen.getByText("Pineapple Coconut")).toBeInTheDocument();
-    expect(screen.getByText("Trial Pack")).toBeInTheDocument();
-    expect(screen.getByText("Tasting events")).toBeInTheDocument();
+    // Scope assertions inside the overlay to avoid ambiguity with product card headings
+    expect(within(searchOverlay).getByText("Lemon Lime")).toBeInTheDocument();
+    expect(within(searchOverlay).getByText("Pineapple Coconut")).toBeInTheDocument();
+    expect(within(searchOverlay).getByText("Trial Pack")).toBeInTheDocument();
+    expect(within(searchOverlay).getByText("Tasting events")).toBeInTheDocument();
   });
-
   it("interacts with Chat Assistant and submits user message", async () => {
     renderApp();
 
