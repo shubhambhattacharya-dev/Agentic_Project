@@ -16,7 +16,8 @@
     "test:client": "npm --prefix frontend run test",
     "test:server": "vitest run dist",
     "test": "npm run test:client && npm run test:server",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint .",
+
   },
   "repository": {
     "type": "git",
@@ -30,6 +31,7 @@
   },
   "homepage": "https://github.com/shubhambhattacharya-dev/Agentic_Project#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
@@ -42,6 +44,7 @@
     "prisma": "^7.8.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1",
     "vitest": "^4.1.8"
   },
   "dependencies": {
