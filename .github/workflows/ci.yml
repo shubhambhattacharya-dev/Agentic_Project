@@ -10,6 +10,24 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,6 +44,12 @@ jobs:
       - name: Install Frontend Dependencies
         run: cd frontend && npm install
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Push Database Schema
+        run: npx prisma db push
+
       - name: Run Linting
         run: npm run lint
 
@@ -34,8 +58,6 @@ jobs:
 
       - name: Run Backend Tests
         run: npm run test:server
-        env:
-          DATABASE_URL: "file:./dev.db"
 
       - name: Run Frontend Tests
         run: npm run test:client
