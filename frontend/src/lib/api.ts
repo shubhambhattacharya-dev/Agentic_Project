@@ -1,4 +1,4 @@
-export type UiChatMessage = {
+﻿export type UiChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
@@ -15,7 +15,7 @@ export type ChatResponse = {
   success: boolean;
   data: {
     message: string;
-    messageHistory: unknown[];
+    sessionId: string | null;
   };
 };
 

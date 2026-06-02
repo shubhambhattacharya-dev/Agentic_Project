@@ -1,13 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AgentService } from '../modules/agent/agent.service.js';
 import { toolRegistry } from '../modules/tools/tool.registry.js';
-import { UserMessageSchema } from '../modules/agent/agent.types.js';
+import { ChatMessageSchema } from '../modules/agent/agent.types.js';
 import { logger } from '../config/logger.js';
 
+const ChatMessageInputSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1, 'Message content cannot be empty').max(4000, 'Message exceeds maximum length'),
+});
+
 const ChatRequestBodySchema = z.object({
-  message: z.string().min(1, 'Message is required').max(4000, 'Message exceeds maximum length'),
-  sessionId: z.string().min(1).max(256).optional(),
+  sessionId: z.string().min(1).max(256),
+  messages: z.array(ChatMessageInputSchema).min(1, 'At least one message is required').max(50, 'Too many messages'),
   customerEmail: z.string().email('Invalid email format').optional(),
 });
 
@@ -24,7 +29,7 @@ export async function chatController(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { message, sessionId, customerEmail } = parsed.data;
+    const { messages, sessionId, customerEmail } = parsed.data;
 
     const agent = new AgentService(toolRegistry);
 
@@ -32,10 +37,15 @@ export async function chatController(req: Request, res: Response, next: NextFunc
       ? { customerId: '', customerEmail, role: 'customer' as const }
       : undefined;
 
+    // Map frontend messages to agent ChatMessage format
+    const agentMessages = messages.map((m) =>
+      ChatMessageSchema.parse({ role: m.role, content: m.content })
+    );
+
     const result = await agent.run({
       sessionId,
       customerContext,
-      messages: [UserMessageSchema.parse({ role: 'user', content: message })],
+      messages: agentMessages,
     });
 
     const latencyMs = Date.now() - startTime;

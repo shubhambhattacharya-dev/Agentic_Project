@@ -1,9 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  FiArrowUpRight,
-  FiChevronLeft,
-  FiChevronRight,
   FiInstagram,
   FiLinkedin,
   FiMenu,
@@ -63,6 +60,98 @@ function formatPrice(price: number) {
   return `Rs. ${price.toLocaleString("en-IN")}`;
 }
 
+/* Scroll-triggered reveal hook */
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    const children = el.querySelectorAll("[data-reveal]");
+    children.forEach((child) => observer.observe(child));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
+
+/* 3D tilt on hover — Red Bull style card perspective */
+function useTilt() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handleMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      el.style.transform = `perspective(800px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale3d(1.02, 1.02, 1.02)`;
+    };
+    const handleLeave = () => {
+      el.style.transform = "perspective(800px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)";
+    };
+    el.addEventListener("mousemove", handleMove);
+    el.addEventListener("mouseleave", handleLeave);
+    return () => {
+      el.removeEventListener("mousemove", handleMove);
+      el.removeEventListener("mouseleave", handleLeave);
+    };
+  }, []);
+  return ref;
+}
+
+/* Parallax scroll effect — elements move at different speeds */
+function useParallax(speed: number = 0.3) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        const center = rect.top + rect.height / 2 - window.innerHeight / 2;
+        el.style.transform = `translateY(${center * speed}px)`;
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [speed]);
+  return ref;
+}
+
+/* Global 3D mouse glow — spotlight that follows cursor */
+function useMouseGlow() {
+  useEffect(() => {
+    const glow = document.createElement("div");
+    glow.className = "mouse-glow";
+    document.body.appendChild(glow);
+    const handleMove = (e: MouseEvent) => {
+      glow.style.left = e.clientX + "px";
+      glow.style.top = e.clientY + "px";
+    };
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      glow.remove();
+    };
+  }, []);
+}
+
 function App() {
   const { data, isLoading } = useQuery({
     queryKey: ["gigi-storefront"],
@@ -96,8 +185,7 @@ function App() {
       current
         .map((item, itemIndex) =>
           itemIndex === index
-            ? { ...item, quantity: Math.max(0, item.quantity + direction) }
-            : item,
+            ? { ...item, quantity: Math.max(0, item.quantity + direction) } : item,
         )
         .filter((item) => item.quantity > 0),
     );
@@ -106,14 +194,21 @@ function App() {
   if (isLoading || !data) {
     return (
       <main className="loading-screen">
-        <div className="brand-mark">GiGi</div>
-        <p>Loading storefront...</p>
+        <div className="loading-screen__inner">
+          <div className="brand-mark">GiGi</div>
+          <div className="loading-bar"><div className="loading-bar__fill" /></div>
+          <p>Loading storefront...</p>
+        </div>
       </main>
     );
   }
 
+  useMouseGlow();
+
   return (
     <>
+      <div className="grain" aria-hidden="true" />
+      <div className="ambient-glow" aria-hidden="true" />
       <AnnouncementBar />
       <Header
         nav={data.nav}
@@ -156,7 +251,7 @@ function AnnouncementBar() {
   return (
     <div className="announcement">
       <div className="announcement__track">
-        {Array.from({ length: 4 }).map((_, index) => (
+        {Array.from({ length: 6 }).map((_, index) => (
           <span key={index}>Use GIGI10 for 10% off - free Bengaluru shipping above Rs. 500</span>
         ))}
       </div>
@@ -181,18 +276,17 @@ function Header({
   onCartOpen: () => void;
   onSearchOpen: () => void;
 }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="site-header">
+    <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
       <div className="site-header__inner">
-        <Button
-          variant="icon"
-          size="icon"
-          className="site-header__menu"
-          aria-label="Open menu"
-          onClick={onMenuOpen}
-        >
-          <FiMenu />
-        </Button>
+
         <nav className="site-nav" aria-label="Main navigation">
           {nav.map((item) => (
             <a href={`#${item.toLowerCase().replaceAll(" ", "-")}`} key={item}>
@@ -204,16 +298,14 @@ function Header({
           GiGi
         </a>
         <div className="site-actions">
-          <Button variant="icon" size="icon" aria-label="Search" onClick={onSearchOpen}>
-            <FiSearch />
-          </Button>
-          <Button variant="icon" size="icon" aria-label="Log in">
+          <Button variant="ghost" className="profile-button" aria-label="Log in">
             <FiUser />
+            <span>Account</span>
           </Button>
           <Button variant="ghost" className="cart-button" onClick={onCartOpen}>
             <FiShoppingBag />
             <span>Cart</span>
-            {itemCount > 0 && <em>{itemCount}</em>}
+            {itemCount > 0 && <em key={itemCount}>{itemCount}</em>}
           </Button>
         </div>
       </div>
@@ -244,6 +336,7 @@ function Header({
 function HeroCarousel({ slides }: { slides: Awaited<ReturnType<typeof getStorefront>>["heroSlides"] }) {
   const [index, setIndex] = useState(0);
   const slide = slides[index];
+  const revealRef = useReveal();
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -252,11 +345,9 @@ function HeroCarousel({ slides }: { slides: Awaited<ReturnType<typeof getStorefr
     return () => window.clearInterval(timer);
   }, [slides.length]);
 
-  const next = () => setIndex((current) => (current + 1) % slides.length);
-  const previous = () => setIndex((current) => (current - 1 + slides.length) % slides.length);
 
   return (
-    <section className={`hero hero--${slide.accent}`} id="home">
+    <section className={`hero hero--${slide.accent}`} id="home" ref={revealRef}>
       <div className="hero__image-wrap">
         {slides.map((heroSlide, heroIndex) => (
           <img
@@ -266,17 +357,7 @@ function HeroCarousel({ slides }: { slides: Awaited<ReturnType<typeof getStorefr
             className={heroIndex === index ? "is-active" : ""}
           />
         ))}
-        <div className="hero__controls">
-          <Button variant="icon" size="icon" aria-label="Previous slide" onClick={previous}>
-            <FiChevronLeft />
-          </Button>
-          <span>
-            {index + 1} / {slides.length}
-          </span>
-          <Button variant="icon" size="icon" aria-label="Next slide" onClick={next}>
-            <FiChevronRight />
-          </Button>
-        </div>
+
       </div>
       <div className="hero__copy">
         <Badge tone={slide.accent === "yellow" ? "yellow" : "lime"}>{slide.eyebrow}</Badge>
@@ -290,33 +371,21 @@ function HeroCarousel({ slides }: { slides: Awaited<ReturnType<typeof getStorefr
             </span>
           ))}
         </div>
-        <div className="hero__actions">
-          <Button variant="primary" size="lg" asChild>
-            <a href="#shop-all">See Gigi Flavours</a>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <a href="https://www.whatsapp.com">
-              Shop on WhatsApp
-              <FiArrowUpRight />
-            </a>
-          </Button>
-        </div>
+
       </div>
     </section>
   );
 }
 
 function LogoMarquee({ logos }: { logos: string[] }) {
-  const doubled = [...logos, ...logos];
+  const ref = useReveal();
   return (
-    <section className="logo-band" aria-label="Partner logos">
+    <section className="logo-band" aria-label="Partner logos" ref={ref} data-reveal>
       <h2>Fueling dreamers at</h2>
-      <div className="logo-marquee">
-        <div className="logo-marquee__track">
-          {doubled.map((logo, index) => (
-            <span key={`${logo}-${index}`}>{logo}</span>
-          ))}
-        </div>
+      <div className="logo-grid">
+        {logos.map((logo) => (
+          <span key={logo}>{logo}</span>
+        ))}
       </div>
     </section>
   );
@@ -329,16 +398,19 @@ function ProductSection({
   products: Product[];
   onAdd: (product: Product, option: string, price: number) => void;
 }) {
+  const ref = useReveal();
   return (
-    <section className="section products" id="shop-all">
-      <div className="section__heading">
+    <section className="section products" id="shop-all" ref={ref}>
+      <div className="section__heading" data-reveal>
         <Badge tone="light">Shop all</Badge>
         <h2>Choose your flavour</h2>
         <p>Two core flavours and a trial pack, styled with the bright product-first rhythm of the original storefront.</p>
       </div>
       <div className="product-grid">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} onAdd={onAdd} />
+        {products.map((product, i) => (
+          <div key={product.id} data-reveal style={{ transitionDelay: `${i * 0.12}s` }}>
+            <ProductCard product={product} onAdd={onAdd} />
+          </div>
         ))}
       </div>
     </section>
@@ -352,16 +424,18 @@ function ProductCard({
   product: Product;
   onAdd: (product: Product, option: string, price: number) => void;
 }) {
+  const tiltRef = useTilt();
   const [selectedOption, setSelectedOption] = useState(product.options[0]);
   const background = useMemo(
     () => ({
       "--product-accent": product.accent,
+      "--product-accent-glow": product.accent + "26",
     }),
     [product.accent],
   );
 
   return (
-    <Card className="product-card" style={background as React.CSSProperties}>
+    <Card className="product-card" ref={tiltRef} style={{ ...(background as React.CSSProperties), transformStyle: "preserve-3d", transition: "transform 0.15s ease-out" }}>
       <CardHeader>
         <div className="product-card__media">
           <img src={product.image} alt={product.name} />
@@ -370,7 +444,7 @@ function ProductCard({
       <CardContent>
         <div className="product-card__title">
           <h3>{product.name}</h3>
-          <strong>{formatPrice(selectedOption.price)}</strong>
+          <strong key={selectedOption.price}>{formatPrice(selectedOption.price)}</strong>
         </div>
         <div className="pack-switch" role="tablist" aria-label={`${product.name} pack options`}>
           {product.options.map((option) => (
@@ -405,9 +479,10 @@ function ProductCard({
 }
 
 function NutritionSection({ nutrition, products }: { nutrition: string[][]; products: Product[] }) {
+  const ref = useReveal();
   return (
-    <section className="section nutrition">
-      <div className="nutrition__image-stack" aria-hidden="true">
+    <section className="section nutrition" ref={ref}>
+      <div className="nutrition__image-stack" aria-hidden="true" data-reveal>
         {products.slice(0, 2).map((product, index) => (
           <img
             key={product.id}
@@ -417,7 +492,7 @@ function NutritionSection({ nutrition, products }: { nutrition: string[][]; prod
           />
         ))}
       </div>
-      <div className="nutrition__copy">
+      <div className="nutrition__copy" data-reveal>
         <Badge tone="dark">Ingredients</Badge>
         <h2>Low sugar, low calorie, vitamin-forward.</h2>
         <p>
@@ -438,14 +513,15 @@ function NutritionSection({ nutrition, products }: { nutrition: string[][]; prod
 }
 
 function FormulaSection({ image }: { image: string }) {
+  const ref = useReveal();
   return (
-    <section className="section formula">
-      <div className="section__heading">
+    <section className="section formula" ref={ref}>
+      <div className="section__heading" data-reveal>
         <Badge tone="lime">Advanced formula</Badge>
         <h2>Better ingredients. Better energy.</h2>
       </div>
       <div className="formula__grid">
-        <div className="formula__image">
+        <div className="formula__image" data-reveal>
           <img src={image} alt="Gigi Lemon Lime with ingredients" />
         </div>
         <Tabs defaultValue="burn" className="formula__tabs">
@@ -500,9 +576,10 @@ function UseCaseMarquee() {
 }
 
 function TastingEvents({ events }: { events: Awaited<ReturnType<typeof getStorefront>>["events"] }) {
+  const ref = useReveal();
   return (
-    <section className="section events" id="tasting-events">
-      <div className="events__intro">
+    <section className="section events" id="tasting-events" ref={ref}>
+      <div className="events__intro" data-reveal>
         <Badge tone="yellow">Free tasting events</Badge>
         <h2>Host a tasting event</h2>
         <p>Bring a bright sampling setup to gyms, offices, or community events with a compact event request flow.</p>
@@ -511,14 +588,8 @@ function TastingEvents({ events }: { events: Awaited<ReturnType<typeof getStoref
         </Button>
       </div>
       <div className="event-grid">
-        {events.map((event) => (
-          <Card className="event-card" key={event.title}>
-            <img src={event.image} alt={event.title} />
-            <CardContent>
-              <h3>{event.title}</h3>
-              <p>{event.copy}</p>
-            </CardContent>
-          </Card>
+        {events.map((event, i) => (
+          <EventCard3D key={event.title} event={event} delay={i} />
         ))}
       </div>
     </section>
@@ -526,8 +597,9 @@ function TastingEvents({ events }: { events: Awaited<ReturnType<typeof getStoref
 }
 
 function SocialStrip() {
+  const ref = useReveal();
   return (
-    <section className="social-strip">
+    <section className="social-strip" ref={ref} data-reveal>
       <h2>Dream big, drink Gigi</h2>
       <a href="https://www.instagram.com/gigienergy.in">
         <FiInstagram />
@@ -535,7 +607,7 @@ function SocialStrip() {
       </a>
       <div className="tag-marquee">
         <div>
-          {Array.from({ length: 2 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <span key={index}>
               no sugar | boost metabolism | natural flavours | enhance focus | no artificial colours |
               better-for-you energy |
@@ -547,12 +619,25 @@ function SocialStrip() {
   );
 }
 
+function EventCard3D({ event, delay }: { event: Awaited<ReturnType<typeof getStorefront>>["events"][0]; delay: number }) {
+  const tiltRef = useTilt();
+  return (
+    <Card className="event-card" ref={tiltRef} data-reveal style={{ transitionDelay: `${delay * 0.1}s`, transformStyle: "preserve-3d", transition: "transform 0.15s ease-out" }}>
+      <img src={event.image} alt={event.title} />
+      <CardContent>
+        <h3>{event.title}</h3>
+        <p>{event.copy}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function Footer({ nav }: { nav: string[] }) {
   return (
     <footer className="footer" id="contact">
       <div className="footer__brand">
         <span className="site-logo">GiGi</span>
-        <p>India-inspired better-for-you energy drink concept with sugar-free flavours, vitamins, and clean storefront flow.</p>
+        <p>India-inspired better-for-you energy drink with sugar-free flavours, vitamins, and clean energy.</p>
       </div>
       <div>
         <h3>Learn</h3>
@@ -574,11 +659,10 @@ function Footer({ nav }: { nav: string[] }) {
         </div>
       </div>
       <div className="footer__bottom">
-        <span>© 2026 Gigi Energy recreation</span>
+        <span>&copy; 2026 Gigi Energy</span>
         <span>UPI</span>
         <span>VISA</span>
         <span>RuPay</span>
-        <span>AMEX</span>
         <span>NetBanking</span>
       </div>
     </footer>

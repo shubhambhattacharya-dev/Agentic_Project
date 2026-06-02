@@ -30,7 +30,7 @@ export function ChatAssistant() {
 
   const chat = useMutation({
     mutationFn: sendChatMessage,
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       setMessages((current) => [
         ...current,
         {
@@ -39,7 +39,7 @@ export function ChatAssistant() {
         },
       ]);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setMessages((current) => [
         ...current,
         {
