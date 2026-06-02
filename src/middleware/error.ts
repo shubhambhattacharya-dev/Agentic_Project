@@ -10,7 +10,7 @@ export interface AppError extends Error {
   body?: unknown;
 }
 
-export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, next) => {
+export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, _next) => {
   logger.error(err, `[SERVER ERROR]: ${err.message}`);
 
   const isMalformedJson =

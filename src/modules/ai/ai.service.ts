@@ -98,7 +98,7 @@ Expected JSON Structure Schema: ${schemaDescription}`;
       parsedJson = JSON.parse(content);
     } catch (parseErr) {
       logger.error({ content }, "❌ Failed to parse JSON string returned by LLM");
-      throw new Error(`LLM output was not valid JSON: ${(parseErr as Error).message}`);
+      throw new Error(`LLM output was not valid JSON: ${(parseErr as Error).message}`, { cause: parseErr });
     }
 
     // 🚀 Production Rule 7: Strict Runtime Validation using safeParse()
@@ -115,6 +115,6 @@ Expected JSON Structure Schema: ${schemaDescription}`;
 
   } catch (error) {
     logger.error(error, "Error inside generateStructuredOutput");
-    throw error;
+    throw new Error("Failed to generate structured output", { cause: error });
   }
-}
+  }
