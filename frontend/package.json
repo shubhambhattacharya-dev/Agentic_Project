@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "gigi-energy-storefront",
   "version": "0.1.0",
   "private": true,
@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",`n    "lint": "eslint src/"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -21,13 +21,18 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^10.4.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
     "happy-dom": "^20.9.0",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"
   }

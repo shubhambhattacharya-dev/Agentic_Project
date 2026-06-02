@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+﻿import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FiMessageCircle, FiSend, FiWifi, FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export function ChatAssistant() {
       content: "Hi, I am GIGI. Ask me about orders, refunds, shipping, or ingredients.",
     },
   ]);
-  const sessionId = useMemo(createSessionId, []);
+  const sessionId = useMemo(() => createSessionId(), []);
 
   const health = useQuery({
     queryKey: ["api-health"],
@@ -30,7 +30,7 @@ export function ChatAssistant() {
 
   const chat = useMutation({
     mutationFn: sendChatMessage,
-    onSuccess: (response: any) => {
+    onSuccess: (response: { data: { message: string } }) => {
       setMessages((current) => [
         ...current,
         {
@@ -39,7 +39,7 @@ export function ChatAssistant() {
         },
       ]);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setMessages((current) => [
         ...current,
         {

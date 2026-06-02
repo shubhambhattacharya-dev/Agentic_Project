@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FiInstagram,
   FiLinkedin,
-  FiMenu,
   FiMinus,
   FiPlus,
   FiSearch,
@@ -110,29 +109,6 @@ function useTilt() {
   return ref;
 }
 
-/* Parallax scroll effect — elements move at different speeds */
-function useParallax(speed: number = 0.3) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let ticking = false;
-    const handleScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const rect = el.getBoundingClientRect();
-        const center = rect.top + rect.height / 2 - window.innerHeight / 2;
-        el.style.transform = `translateY(${center * speed}px)`;
-        ticking = false;
-      });
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [speed]);
-  return ref;
-}
 
 /* Global 3D mouse glow — spotlight that follows cursor */
 function useMouseGlow() {
@@ -191,6 +167,8 @@ function App() {
     );
   };
 
+  useMouseGlow();
+
   if (isLoading || !data) {
     return (
       <main className="loading-screen">
@@ -203,8 +181,6 @@ function App() {
     );
   }
 
-  useMouseGlow();
-
   return (
     <>
       <div className="grain" aria-hidden="true" />
@@ -214,10 +190,8 @@ function App() {
         nav={data.nav}
         itemCount={itemCount}
         menuOpen={menuOpen}
-        onMenuOpen={() => setMenuOpen(true)}
         onMenuClose={() => setMenuOpen(false)}
         onCartOpen={() => setCartOpen(true)}
-        onSearchOpen={() => setSearchOpen(true)}
       />
       <main>
         <HeroCarousel slides={data.heroSlides} />
@@ -263,18 +237,14 @@ function Header({
   nav,
   itemCount,
   menuOpen,
-  onMenuOpen,
   onMenuClose,
   onCartOpen,
-  onSearchOpen,
 }: {
   nav: string[];
   itemCount: number;
   menuOpen: boolean;
-  onMenuOpen: () => void;
   onMenuClose: () => void;
   onCartOpen: () => void;
-  onSearchOpen: () => void;
 }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
