@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PLACED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUND_PENDING_APPROVAL
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model Customer {
+  id        String   @id @default(uuid()) @map("id")
+  email     String   @unique @map("email")
+  name      String   @map("name")
+  role      UserRole @default(CUSTOMER) @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders   Order[]
+  sessions AgentSession[]
+
+  @@map("customers")
+}
+
+model Product {
+  id        String   @id @map("id")
+  name      String   @map("name")
+  price     Decimal  @db.Decimal(10, 2) @map("price")
+  stock     Int      @map("stock")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @map("id") // Custom ID format e.g., gigi-101
+  customerId      String      @map("customer_id")
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status          OrderStatus @map("status")
+  totalAmount     Decimal     @db.Decimal(10, 2) @map("total_amount")
+  shippingAddress String      @map("shipping_address")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  items   OrderItem[]
+  refunds RefundRequest[]
+
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid()) @map("id")
+  orderId   String  @map("order_id")
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @map("quantity")
+  price     Decimal @db.Decimal(10, 2) @map("price")
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model RefundRequest {
+  id           String       @id @default(uuid()) @map("id")
+  orderId      String       @map("order_id")
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reason       String       @map("reason")
+  damageClaim  Boolean      @default(false) @map("damage_claim")
+  status       RefundStatus @default(PENDING) @map("status")
+  amount       Decimal      @db.Decimal(10, 2) @map("amount")
+  reviewedBy   String?      @map("reviewed_by")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@map("refund_requests")
+}
+
+model AgentSession {
+  id         String   @id @default(uuid()) @map("id")
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  messages AgentMessage[]
+  metrics  LLMOpsMetric[]
+
+  @@index([customerId])
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id         String   @id @default(uuid()) @map("id")
+  sessionId  String   @map("session_id")
+  session    AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role       String   @map("role") // "system" | "user" | "assistant" | "tool"
+  content    String?  @map("content")
+  toolCalls  Json?    @map("tool_calls")
+  toolCallId String?  @map("tool_call_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("agent_messages")
+}
+
+model LLMOpsMetric {
+  id               String        @id @default(uuid()) @map("id")
+  sessionId        String?       @map("session_id")
+  session          AgentSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  model            String        @map("model")
+  promptTokens     Int           @map("prompt_tokens")
+  completionTokens Int           @map("completion_tokens")
+  totalTokens      Int           @map("total_tokens")
+  costUSD          Float         @map("cost_usd")
+  costINR          Float         @map("cost_inr")
+  latencyMs        Int           @map("latency_ms")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("llmops_metrics")
+}

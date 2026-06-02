@@ -6,14 +6,14 @@ import { logger } from '../../config/logger.js';
 export interface RegisterToolOptions<T extends z.ZodTypeAny> {
   definition: ToolDefinition;
   schema: T;
-  handler: (args: z.infer<T>) => Promise<any>;  
+  handler: (args: z.infer<T>) => Promise<unknown>;
 }
 
 export class ToolRegistry {
   private tools = new Map<string, {
     definition: ToolDefinition;
     schema: z.ZodTypeAny;
-    handler: (args: any) => Promise<any>;
+    handler: (args: unknown) => Promise<unknown>;
   }>();
 
   constructor() {
@@ -29,7 +29,7 @@ export class ToolRegistry {
       throw new ToolSecurityError(`Tool with name "${name}" is already registered.`); 
     }
 
-    this.tools.set(name, { definition, schema, handler });
+    this.tools.set(name, { definition, schema, handler: handler as (args: unknown) => Promise<unknown> });
     logger.info(`Tool successfully registered: ${name}`);
   }
 

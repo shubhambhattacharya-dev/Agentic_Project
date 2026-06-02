@@ -11,6 +11,7 @@ const envSchema=z.object({
     NODE_ENV:z.enum(["development" ,"production","test"]).default("development"),
     ALLOWED_ORIGINS:z.string().default("*"),
     LOG_LEVEL:z.string().default("info"),
+    DATABASE_URL:z.string().min(1,"DATABASE_URL is required"),
 })
 
 const parsed=envSchema.safeParse(process.env);
