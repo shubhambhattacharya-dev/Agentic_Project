@@ -16,8 +16,7 @@
     "test:client": "npm --prefix frontend run test",
     "test:server": "vitest run dist",
     "test": "npm run test:client && npm run test:server",
-    "lint": "eslint .",
-
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
