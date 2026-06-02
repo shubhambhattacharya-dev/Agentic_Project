@@ -28,12 +28,13 @@ enum UserRole {
 }
 
 model Customer {
-  id        String   @id @default(uuid()) @map("id")
-  email     String   @unique @map("email")
-  name      String   @map("name")
-  role      UserRole @default(CUSTOMER) @map("role")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String    @id @default(uuid()) @map("id")
+  clerkId   String?   @unique @map("clerk_id")
+  email     String    @unique @map("email")
+  name      String    @map("name")
+  role      UserRole  @default(CUSTOMER) @map("role")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   orders   Order[]
   sessions AgentSession[]
@@ -55,7 +56,7 @@ model Product {
 }
 
 model Order {
-  id              String      @id @map("id") // Custom ID format e.g., gigi-101
+  id              String      @id @map("id")
   customerId      String      @map("customer_id")
   customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   status          OrderStatus @map("status")
@@ -119,7 +120,7 @@ model AgentMessage {
   id         String   @id @default(uuid()) @map("id")
   sessionId  String   @map("session_id")
   session    AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  role       String   @map("role") // "system" | "user" | "assistant" | "tool"
+  role       String   @map("role")
   content    String?  @map("content")
   toolCalls  Json?    @map("tool_calls")
   toolCallId String?  @map("tool_call_id")

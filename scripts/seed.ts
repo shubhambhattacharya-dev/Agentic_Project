@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import "dotenv/config";
@@ -30,7 +30,7 @@ async function main() {
       id: 'cust-001',
       name: 'Shubham Bhattacharya',
       email: 'shubham@example.com',
-      role: 'CUSTOMER' as const,
+      role: 'ADMIN' as const,  // Admin user
     },
     {
       id: 'cust-002',
@@ -44,12 +44,6 @@ async function main() {
       email: 'pooja@example.com',
       role: 'CUSTOMER' as const,
     },
-    {
-      id: 'admin-001',
-      name: 'Gigi Admin User',
-      email: 'admin@gigienergy.com',
-      role: 'ADMIN' as const,
-    },
   ];
 
   for (const c of customers) {
@@ -61,21 +55,21 @@ async function main() {
   const products = [
     {
       id: 'p1',
-      name: 'Gigi Pineapple Coconut',
-      price: '125.00',
-      stock: 50,
+      name: 'Gigi Lemon Lime',
+      price: '99.00',
+      stock: 100,
     },
     {
       id: 'p2',
-      name: 'Gigi Lemon Lime',
-      price: '125.00',
-      stock: 35,
+      name: 'Gigi Pineapple Coconut',
+      price: '99.00',
+      stock: 80,
     },
     {
       id: 'p3',
-      name: 'Gigi Trial Pack',
+      name: 'Gigi Trial Pack (4 cans)',
       price: '396.00',
-      stock: 20,
+      stock: 30,
     },
   ];
 
@@ -90,28 +84,20 @@ async function main() {
       id: 'gigi-101',
       customerId: 'cust-001',
       status: 'DELIVERED' as const,
-      totalAmount: '625.00',
+      totalAmount: '495.00',
       shippingAddress: 'B-201, Shanti Kunj, Surat, Gujarat',
       items: [
-        {
-          productId: 'p2',
-          quantity: 5,
-          price: '125.00',
-        },
+        { productId: 'p1', quantity: 5, price: '99.00' },
       ],
     },
     {
       id: 'gigi-102',
       customerId: 'cust-002',
       status: 'DELIVERED' as const,
-      totalAmount: '125.00',
+      totalAmount: '99.00',
       shippingAddress: 'Flat 405, Heights Residency, Mumbai',
       items: [
-        {
-          productId: 'p1',
-          quantity: 1,
-          price: '125.00',
-        },
+        { productId: 'p2', quantity: 1, price: '99.00' },
       ],
     },
     {
@@ -121,32 +107,23 @@ async function main() {
       totalAmount: '396.00',
       shippingAddress: 'Sector 15, Gandhinagar, Gujarat',
       items: [
-        {
-          productId: 'p3',
-          quantity: 1,
-          price: '396.00',
-        },
+        { productId: 'p3', quantity: 1, price: '396.00' },
       ],
     },
     {
       id: 'gigi-104',
       customerId: 'cust-003',
       status: 'SHIPPED' as const,
-      totalAmount: '396.00',
+      totalAmount: '198.00',
       shippingAddress: 'Sector 15, Gandhinagar, Gujarat',
       items: [
-        {
-          productId: 'p3',
-          quantity: 1,
-          price: '396.00',
-        },
+        { productId: 'p1', quantity: 2, price: '99.00' },
       ],
     },
   ];
 
   for (const o of orders) {
     const { items, ...orderData } = o;
-    // Create order and its items in a transaction
     await prisma.order.create({
       data: {
         ...orderData,
@@ -158,6 +135,18 @@ async function main() {
   }
 
   console.log('✅ Seeding completed successfully!');
+  console.log('');
+  console.log('📋 Seeded Data Summary:');
+  console.log('  - 3 customers (1 admin, 2 regular)');
+  console.log('  - 3 products (Lemon Lime, Pineapple Coconut, Trial Pack)');
+  console.log('  - 4 orders (PLACED, SHIPPED, DELIVERED x2)');
+  console.log('');
+  console.log('🔑 Admin Account:');
+  console.log('  - Email: shubham@example.com');
+  console.log('  - Role: ADMIN');
+  console.log('');
+  console.log('💡 To make a Clerk user admin, update their role in the database:');
+  console.log('  UPDATE customers SET role = \'ADMIN\' WHERE email = \'your-email@example.com\';');
 }
 
 main()
