@@ -65,10 +65,10 @@ describe('ChatAssistant — DOM Interactions', () => {
     expect(screen.getByText(/Hi, I am GIGI/)).toBeDefined();
   });
 
-  it('shows "Backend connected" when health check passes', async () => {
+  it('shows "Online" when health check passes', async () => {
     renderChat();
     fireEvent.click(screen.getByText('Ask GIGI'));
-    expect(await screen.findByText('Backend connected')).toBeDefined();
+    expect(await screen.findByText('Online')).toBeDefined();
   });
 
   // -- SEND MESSAGE FLOW ----------------------------------------------
@@ -146,7 +146,7 @@ describe('ChatAssistant — DOM Interactions', () => {
     mockHealthResult = new Error('Network Error');
     renderChat();
     fireEvent.click(screen.getByText('Ask GIGI'));
-    expect(await screen.findByText('Backend unavailable')).toBeDefined();
+    expect(await screen.findByText('Reconnecting...')).toBeDefined();
   });
 
   it('shows error message when chat API fails', async () => {

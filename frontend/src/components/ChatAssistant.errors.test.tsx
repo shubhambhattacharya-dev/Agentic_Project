@@ -32,7 +32,7 @@ describe('ChatAssistant — Error & Edge Cases', () => {
     const { fireEvent } = await import('@testing-library/react');
     fireEvent.click(screen.getByText('Ask GIGI'));
     // Should show offline indicator
-    const status = await screen.findByText('Backend unavailable');
+    const status = await screen.findByText('Reconnecting...');
     expect(status).toBeDefined();
   });
 

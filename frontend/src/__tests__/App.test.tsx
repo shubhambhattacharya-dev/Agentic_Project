@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "../App";
@@ -207,7 +207,7 @@ describe("Gigi Storefront DOM Tests", () => {
     expect(within(chatPanel).getByText("GIGI Support")).toBeInTheDocument();
 
     // Check health connection status
-    expect(within(chatPanel).getByText("Backend connected")).toBeInTheDocument();
+    expect(within(chatPanel).getByText("Online")).toBeInTheDocument();
 
     // Default welcome message
     expect(within(chatPanel).getByText(/Hi, I am GIGI. Ask me about orders/i)).toBeInTheDocument();
