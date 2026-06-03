@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: gigi-backend
+    runtime: node
+    region: mumbai
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run server:build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API
+        sync: false
+      - key: GROQ_MODEL_LLM
+        value: llama-3.3-70b-versatile
+      - key: GROQ_MODEL_SLM
+        value: llama-3.1-8b-instant
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
