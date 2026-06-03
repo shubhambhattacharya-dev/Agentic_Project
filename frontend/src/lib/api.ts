@@ -1,4 +1,4 @@
-ï»¿export type UiChatMessage = {
+export type UiChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
@@ -22,14 +22,17 @@ export type ChatResponse = {
 };
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
+  // Merge headers properly — init.headers must NOT overwrite Content-Type
+  const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...((init?.headers as Record<string, string>) ?? {}),
   };
 
+  const { headers: _unused, ...restInit } = init ?? {}; // eslint-disable-line @typescript-eslint/no-unused-vars
+
   const response = await fetch(path, {
-    headers,
-    ...init,
+    headers: mergedHeaders,
+    ...restInit,
   });
 
   const payload = (await response.json().catch(() => null)) as
@@ -53,8 +56,7 @@ export function sendChatMessage(input: {
   token?: string;
 }) {
   const headers: Record<string, string> = {};
-  
-  // Add Clerk auth token if provided
+
   if (input.token) {
     headers["Authorization"] = `Bearer ${input.token}`;
   }

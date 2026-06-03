@@ -1,34 +1,17 @@
 // src/routes/admin.routes.ts
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import { prisma } from "../config/db.js";
 import { logger } from "../config/logger.js";
 import { clerkAuthMiddleware } from "../middleware/auth.js";
+import { requireAdmin } from "../middleware/admin.js";
 
 const route = express.Router();
 
+// All admin routes require authentication + admin role
 route.use(clerkAuthMiddleware);
+route.use(requireAdmin);
 
-async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const userId = (req as unknown as Record<string, unknown>).userId as string | undefined;
-
-  if (!userId) {
-    res.status(401).json({ success: false, error: "Authentication required" });
-    return;
-  }
-
-  const customer = await prisma.customer.findUnique({
-    where: { clerkId: userId },
-  });
-
-  if (!customer || customer.role !== "ADMIN") {
-    res.status(403).json({ success: false, error: "Admin access required" });
-    return;
-  }
-
-  next();
-}
-
-route.get("/refunds/pending", requireAdmin, async (_req: Request, res: Response) => {
+route.get("/refunds/pending", async (_req: Request, res: Response) => {
   try {
     const pendingRefunds = await prisma.refundRequest.findMany({
       where: { status: "PENDING" },
@@ -50,10 +33,10 @@ route.get("/refunds/pending", requireAdmin, async (_req: Request, res: Response)
   }
 });
 
-route.post("/refunds/:id/approve", requireAdmin, async (req: Request, res: Response) => {
+route.post("/refunds/:id/approve", async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = (req as unknown as Record<string, unknown>).userId as string;
+    const adminUserId = (req as any).userId as string;
 
     const refund = await prisma.refundRequest.findUnique({
       where: { id },
@@ -92,12 +75,10 @@ route.post("/refunds/:id/approve", requireAdmin, async (req: Request, res: Respo
   }
 });
 
-route.post("/refunds/:id/reject", requireAdmin, async (req: Request, res: Response) => {
+route.post("/refunds/:id/reject", async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = (req as unknown as Record<string, unknown>).userId as string;
-    const { reason } = req.body as { reason?: string };
-
+    const adminUserId = (req as any).userId as string;
     const refund = await prisma.refundRequest.findUnique({ where: { id } });
 
     if (!refund) {
@@ -116,10 +97,14 @@ route.post("/refunds/:id/reject", requireAdmin, async (req: Request, res: Respon
         data: { status: "REJECTED", reviewedBy: adminUserId },
       });
 
-      await tx.order.update({
-        where: { id: refund.orderId },
-        data: { status: "DELIVERED" },
-      });
+      // Only reset order status if it's currently REFUND_PENDING_APPROVAL
+      const order = await tx.order.findUnique({ where: { id: refund.orderId } });
+      if (order && order.status === "REFUND_PENDING_APPROVAL") {
+        await tx.order.update({
+          where: { id: refund.orderId },
+          data: { status: "DELIVERED" },
+        });
+      }
 
       return updatedRefund;
     });
@@ -132,7 +117,7 @@ route.post("/refunds/:id/reject", requireAdmin, async (req: Request, res: Respon
   }
 });
 
-route.get("/metrics", requireAdmin, async (_req: Request, res: Response) => {
+route.get("/metrics", async (_req: Request, res: Response) => {
   try {
     const metrics = await prisma.lLMOpsMetric.findMany({
       orderBy: { createdAt: "desc" },
@@ -165,7 +150,7 @@ route.get("/metrics", requireAdmin, async (_req: Request, res: Response) => {
   }
 });
 
-route.get("/customers", requireAdmin, async (_req: Request, res: Response) => {
+route.get("/customers", async (_req: Request, res: Response) => {
   try {
     const customers = await prisma.customer.findMany({
       include: {

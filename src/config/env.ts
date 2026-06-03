@@ -16,12 +16,12 @@ const envSchema = z.object({
     // Database
     DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-    // Clerk Authentication (optional in dev/test, required in production)
+    // Clerk Authentication
     CLERK_PUBLISHABLE_KEY: z.string().default(""),
     CLERK_SECRET_KEY: z.string().default(""),
     CLERK_WEBHOOK_SECRET: z.string().default(""),
 
-    // Sentry Error Monitoring (optional)
+    // Sentry Error Monitoring
     SENTRY_DSN: z.string().optional().default(""),
 })
 
@@ -33,7 +33,6 @@ if (!parsed.success) {
     process.exit(1)
 }
 
-// Warn if Clerk keys are missing in production
 if (parsed.data.NODE_ENV === "production" && !parsed.data.CLERK_SECRET_KEY) {
     console.warn("WARNING: CLERK_SECRET_KEY is not set. Authentication will not work in production!")
 }

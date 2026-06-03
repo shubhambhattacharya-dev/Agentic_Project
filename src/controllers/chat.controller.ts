@@ -4,6 +4,7 @@ import { AgentService } from '../modules/agent/agent.service.js';
 import { toolRegistry } from '../modules/tools/tool.registry.js';
 import { ChatMessageSchema } from '../modules/agent/agent.types.js';
 import { logger } from '../config/logger.js';
+import { prisma } from '../config/db.js';
 
 // Extended request type with Clerk auth fields
 interface AuthenticatedRequest extends Request {
@@ -51,11 +52,18 @@ export async function chatController(req: Request, res: Response, next: NextFunc
 
     const agent = new AgentService(toolRegistry);
 
+    // Look up customer in DB for name and role
+    const dbCustomer = await prisma.customer.findFirst({
+      where: { clerkId: userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
     // Trusted backend context from Clerk auth (NOT from user input)
     const customerContext = {
-      customerId: userId,
-      customerEmail: userEmail ?? 'unknown',
-      role: 'customer' as const,
+      customerId: dbCustomer?.id ?? userId,
+      customerEmail: dbCustomer?.email ?? userEmail ?? 'unknown',
+      customerName: dbCustomer?.name ?? 'Customer',
+      role: (dbCustomer?.role?.toLowerCase() ?? 'customer') as 'customer' | 'admin',
     };
 
     // Map frontend messages to agent ChatMessage format

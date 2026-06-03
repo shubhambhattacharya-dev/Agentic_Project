@@ -12,6 +12,12 @@ vi.mock("@clerk/clerk-react", () => ({
   }),
   ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
   SignIn: () => <div>Sign In</div>,
+  UserButton: () => <div>User Button</div>,
+}));
+
+// 1b. Mock account helper (used by UserNav)
+vi.mock("../lib/account", () => ({
+  getAccount: vi.fn().mockResolvedValue({ role: "CUSTOMER", name: "Test User" }),
 }));
 
 // 2. Mock storefront-data API

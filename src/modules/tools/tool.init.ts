@@ -1,9 +1,10 @@
-ï»¿// src/modules/tools/tool.init.ts
+// src/modules/tools/tool.init.ts
 import { z } from 'zod';
 import { toolRegistry, ToolContext } from './tool.registry.js';
 import { cancelOrder, processRefund, getOrderById } from '../order/order.service.js';
 import { ToolDefinition } from './tool.types.js';
 import { logger } from '../../config/logger.js';
+import { prisma } from '../../config/db.js';
 
 // 1. Define specifications
 const cancelOrderDef: ToolDefinition = {
@@ -53,6 +54,32 @@ const getOrderDef: ToolDefinition = {
   },
 };
 
+const getProductsDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "getProducts",
+    description: "List all available Gigi Energy products with name, price, and stock. Use when a customer asks about products, flavors, pricing, ingredients, or what's available.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+};
+
+const getCustomerOrdersDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "getCustomerOrders",
+    description: "List all orders for the authenticated customer. Use when the customer asks about 'my orders', 'order history', or 'what did I order'.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+};
+
 // 2. Define validation schemas
 const CancelOrderArgsSchema = z.object({
   id: z.string().min(1, "Order ID cannot be empty"),
@@ -68,6 +95,10 @@ const GetOrderArgsSchema = z.object({
   id: z.string().min(1, "Order ID cannot be empty"),
 });
 
+const GetProductsArgsSchema = z.object({});
+
+const GetCustomerOrdersArgsSchema = z.object({});
+
 /**
  * Initializes and registers all customer support agent tools.
  * Tools receive authenticated context for ownership validation.
@@ -75,7 +106,7 @@ const GetOrderArgsSchema = z.object({
 export function initializeTools(): void {
   logger.info("Initializing and registering tools in registry...");
 
-  // Register cancelOrder â€” with ownership check
+  // Register cancelOrder — with ownership check
   toolRegistry.registerTool({
     definition: cancelOrderDef,
     schema: CancelOrderArgsSchema,
@@ -84,7 +115,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register processRefund â€” with ownership check
+  // Register processRefund — with ownership check
   toolRegistry.registerTool({
     definition: processRefundDef,
     schema: ProcessRefundArgsSchema,
@@ -93,7 +124,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register getOrder â€” with ownership check
+  // Register getOrder — with ownership check
   toolRegistry.registerTool({
     definition: getOrderDef,
     schema: GetOrderArgsSchema,
@@ -101,6 +132,38 @@ export function initializeTools(): void {
       const order = await getOrderById(args.id, context?.customerId);
       if (!order) return { success: false, error: `Order ${args.id} not found.` };
       return { success: true, order };
+    },
+  });
+
+  // Register getProducts — product catalog lookup
+  toolRegistry.registerTool({
+    definition: getProductsDef,
+    schema: GetProductsArgsSchema,
+    handler: async () => {
+      const products = await prisma.product.findMany({
+        select: { id: true, name: true, price: true, stock: true },
+      });
+      return { success: true, products };
+    },
+  });
+
+  // Register getCustomerOrders — list all orders for the authenticated customer
+  toolRegistry.registerTool({
+    definition: getCustomerOrdersDef,
+    schema: GetCustomerOrdersArgsSchema,
+    handler: async (_args, context?: ToolContext) => {
+      if (!context?.customerId) {
+        return { success: false, error: "Authentication required to view orders." };
+      }
+      const orders = await prisma.order.findMany({
+        where: { customerId: context.customerId },
+        include: {
+          items: { include: { product: true } },
+          refunds: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return { success: true, orders };
     },
   });
 

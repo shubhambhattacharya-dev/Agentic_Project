@@ -1,69 +1,140 @@
-name: CI Pipeline
+﻿name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, database-postgress, feat/authentication ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build-and-test:
+  lint-and-typecheck:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
-      GROQ_API: "gsk_test_dummy_key_for_ci"
-      GROQ_MODEL_LLM: "llama-3.3-70b-versatile"
-      GROQ_MODEL_SLM: "llama-3.1-8b-instant"
-      NODE_ENV: "test"
-      ALLOWED_ORIGINS: "*"
-      LOG_LEVEL: "silent"
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Root Dependencies
-        run: npm install
+      - name: Install backend dependencies
+        run: npm ci
 
-      - name: Install Frontend Dependencies
-        run: cd frontend && npm install
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
 
-      - name: Generate Prisma Client
+      - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Push Database Schema
-        run: npx prisma db push
+      - name: TypeScript check (backend)
+        run: npx tsc --noEmit
 
-      - name: Run Linting
-        run: npm run lint
+      - name: TypeScript check (frontend)
+        run: npx tsc --noEmit --prefix frontend
 
-      - name: Build Project
-        run: npm run build
+      - name: ESLint (backend)
+        run: npx eslint src/ --max-warnings=0
 
-      - name: Run Backend Tests
-        run: npm run test:server
+      - name: ESLint (frontend)
+        run: npm run lint --prefix frontend
 
-      - name: Run Frontend Tests
-        run: npm run test:client
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run unit tests
+        run: npx vitest run --config vitest.config.ts
+        env:
+          NODE_ENV: test
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefix frontend
+
+      - name: Run frontend tests
+        run: npm run test --prefix frontend
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-backend, test-frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build frontend
+        run: npm run client:build
+
+      - name: Build backend
+        run: npm run server:build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            dist/
+            frontend/dist/
+          retention-days: 7
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: npm audit (backend)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: npm audit (frontend)
+        run: npm audit --audit-level=high --prefix frontend
+        continue-on-error: true

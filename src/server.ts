@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -19,9 +19,6 @@ const app = express();
 
 // 1. Initialize Sentry (must be first)
 initSentry();
-
-// 2. Sentry request handler
-Sentry.setupExpressErrorHandler(app);
 
 // 3. Security headers
 app.use(helmet());

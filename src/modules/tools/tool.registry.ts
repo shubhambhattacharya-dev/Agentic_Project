@@ -7,6 +7,7 @@ import { logger } from '../../config/logger.js';
 export interface ToolContext {
   customerId?: string;
   customerEmail?: string;
+  customerName?: string;
   role?: "customer" | "admin";
 }
 

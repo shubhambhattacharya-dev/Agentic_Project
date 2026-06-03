@@ -1,4 +1,4 @@
-﻿import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FiMessageCircle, FiSend, FiWifi, FiX } from "react-icons/fi";
@@ -45,14 +45,19 @@ export function ChatAssistant() {
       ]);
     },
     onError: (error: unknown) => {
+      let content = "I could not reach support right now. Please try again.";
+      if (
+        error instanceof Error &&
+        error.message !== "Failed to fetch" &&
+        error.message !== "Network Error"
+      ) {
+        content = error.message;
+      }
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          content:
-            error instanceof Error
-              ? error.message
-              : "I could not reach support right now. Please try again.",
+          content,
         },
       ]);
     },

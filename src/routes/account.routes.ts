@@ -1,49 +1,45 @@
-// src/routes/account.routes.ts
-import express, { Request, Response } from "express";
+﻿import express, { Request, Response } from "express";
 import { prisma } from "../config/db.js";
 import { logger } from "../config/logger.js";
 import { clerkAuthMiddleware } from "../middleware/auth.js";
+import { clerkClient } from "@clerk/express";
 
 const route = express.Router();
 
 route.use(clerkAuthMiddleware);
 
+const customerInclude = {
+  orders: {
+    include: {
+      items: { include: { product: true } },
+      refunds: true,
+    },
+    orderBy: { createdAt: "desc" as const },
+  },
+};
+
 // GET /api/account/me
 route.get("/me", async (req: Request, res: Response) => {
   try {
-    const userId = (req as unknown as Record<string, unknown>).userId as string | undefined;
-    const userEmail = (req as unknown as Record<string, unknown>).userEmail as string | undefined;
+    const userId = (req as any).userId as string | undefined;
+    const userEmail = (req as any).userEmail as string | undefined;
 
     if (!userId) {
       res.status(401).json({ success: false, error: "Not authenticated" });
       return;
     }
 
+    // 1. Try lookup by clerkId
     let customer = await prisma.customer.findUnique({
       where: { clerkId: userId },
-      include: {
-        orders: {
-          include: {
-            items: { include: { product: true } },
-            refunds: true,
-          },
-          orderBy: { createdAt: "desc" },
-        },
-      },
+      include: customerInclude,
     });
 
+    // 2. Try lookup by email and link clerkId
     if (!customer && userEmail) {
       customer = await prisma.customer.findUnique({
         where: { email: userEmail },
-        include: {
-          orders: {
-            include: {
-              items: { include: { product: true } },
-              refunds: true,
-            },
-            orderBy: { createdAt: "desc" },
-          },
-        },
+        include: customerInclude,
       });
 
       if (customer && !customer.clerkId) {
@@ -54,25 +50,34 @@ route.get("/me", async (req: Request, res: Response) => {
       }
     }
 
+    // 3. Determine role from existing DB record or default to CUSTOMER
+    let role = customer?.role ?? "CUSTOMER";
+
+    // 4. If no customer exists, check Clerk metadata for role before creating
     if (!customer) {
-      customer = await prisma.customer.create({
-        data: {
+      try {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        const clerkRole = (clerkUser.publicMetadata?.role as string)?.toUpperCase();
+        if (clerkRole === "ADMIN") {
+          role = "ADMIN";
+        }
+      } catch {
+        // Clerk lookup failed, use default CUSTOMER
+      }
+
+      const email = userEmail ?? "unknown@example.com";
+      customer = await prisma.customer.upsert({
+        where: { email },
+        update: { clerkId: userId, role },
+        create: {
           clerkId: userId,
-          email: userEmail ?? "unknown@example.com",
+          email,
           name: "Customer",
-          role: "CUSTOMER",
+          role,
         },
-        include: {
-          orders: {
-            include: {
-              items: { include: { product: true } },
-              refunds: true,
-            },
-            orderBy: { createdAt: "desc" },
-          },
-        },
+        include: customerInclude,
       });
-      logger.info(`New customer auto-created: ${userEmail}`);
+      logger.info(`Customer upserted for: ${email} with role: ${role}`);
     }
 
     res.json({ success: true, data: customer });
@@ -85,7 +90,7 @@ route.get("/me", async (req: Request, res: Response) => {
 // GET /api/account/orders
 route.get("/orders", async (req: Request, res: Response) => {
   try {
-    const userId = (req as unknown as Record<string, unknown>).userId as string | undefined;
+    const userId = (req as any).userId as string | undefined;
 
     if (!userId) {
       res.status(401).json({ success: false, error: "Not authenticated" });
