@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../config/db.js";
 import { logger } from "../config/logger.js";
 
@@ -11,6 +11,7 @@ export async function requireAdmin(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userId = (req as any).userId as string | undefined;
 
   if (!userId) {

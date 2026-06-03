@@ -1,4 +1,4 @@
-// Vitest global setup — set required env vars for test environment
+// Vitest global setup â€” set required env vars for test environment
 // This runs before any test file is imported
 process.env.NODE_ENV = "test";
 process.env.GROQ_API = process.env.GROQ_API || "gsk_test_mock_key_for_ci";

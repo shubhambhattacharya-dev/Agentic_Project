@@ -106,7 +106,7 @@ const GetCustomerOrdersArgsSchema = z.object({});
 export function initializeTools(): void {
   logger.info("Initializing and registering tools in registry...");
 
-  // Register cancelOrder — with ownership check
+  // Register cancelOrder â€” with ownership check
   toolRegistry.registerTool({
     definition: cancelOrderDef,
     schema: CancelOrderArgsSchema,
@@ -115,7 +115,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register processRefund — with ownership check
+  // Register processRefund â€” with ownership check
   toolRegistry.registerTool({
     definition: processRefundDef,
     schema: ProcessRefundArgsSchema,
@@ -124,7 +124,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register getOrder — with ownership check
+  // Register getOrder â€” with ownership check
   toolRegistry.registerTool({
     definition: getOrderDef,
     schema: GetOrderArgsSchema,
@@ -135,7 +135,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register getProducts — product catalog lookup
+  // Register getProducts â€” product catalog lookup
   toolRegistry.registerTool({
     definition: getProductsDef,
     schema: GetProductsArgsSchema,
@@ -147,7 +147,7 @@ export function initializeTools(): void {
     },
   });
 
-  // Register getCustomerOrders — list all orders for the authenticated customer
+  // Register getCustomerOrders â€” list all orders for the authenticated customer
   toolRegistry.registerTool({
     definition: getCustomerOrdersDef,
     schema: GetCustomerOrdersArgsSchema,

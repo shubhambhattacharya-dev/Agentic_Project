@@ -1,4 +1,4 @@
-﻿// src/config/sentry.ts
+// src/config/sentry.ts
 import * as Sentry from "@sentry/node";
 import { env } from "./env.js";
 import { logger } from "./logger.js";

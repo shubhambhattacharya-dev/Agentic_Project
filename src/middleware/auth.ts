@@ -1,4 +1,4 @@
-﻿// src/middleware/auth.ts
+// src/middleware/auth.ts
 import { Request, Response, NextFunction } from "express";
 import { clerkClient, verifyToken } from "@clerk/express";
 import { env } from "../config/env.js";

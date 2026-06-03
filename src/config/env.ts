@@ -29,7 +29,7 @@ const parsed = envSchema.safeParse(process.env)
 
 if (!parsed.success) {
     if (process.env.NODE_ENV === "test") {
-        console.warn("Running in test mode with missing env vars — using defaults")
+        console.warn("Running in test mode with missing env vars â€” using defaults")
     } else {
         console.error("Environment validation failed !! check your .env file")
         console.error(parsed.error.format())
@@ -37,7 +37,7 @@ if (!parsed.success) {
     }
 }
 
-if (parsed.data.NODE_ENV === "production" && !parsed.data.CLERK_SECRET_KEY) {
+if (parsed.success && parsed.data.NODE_ENV === "production" && !parsed.data.CLERK_SECRET_KEY) {
     console.warn("WARNING: CLERK_SECRET_KEY is not set. Authentication will not work in production!")
 }
 

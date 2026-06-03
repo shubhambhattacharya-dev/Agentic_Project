@@ -22,7 +22,7 @@ export type ChatResponse = {
 };
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  // Merge headers properly — init.headers must NOT overwrite Content-Type
+  // Merge headers properly â€” init.headers must NOT overwrite Content-Type
   const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...((init?.headers as Record<string, string>) ?? {}),

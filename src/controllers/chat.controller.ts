@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AgentService } from '../modules/agent/agent.service.js';
 import { toolRegistry } from '../modules/tools/tool.registry.js';

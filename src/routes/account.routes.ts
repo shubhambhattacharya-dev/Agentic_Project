@@ -1,4 +1,4 @@
-﻿import express, { Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { prisma } from "../config/db.js";
 import { logger } from "../config/logger.js";
 import { clerkAuthMiddleware } from "../middleware/auth.js";
@@ -21,7 +21,9 @@ const customerInclude = {
 // GET /api/account/me
 route.get("/me", async (req: Request, res: Response) => {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (req as any).userId as string | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userEmail = (req as any).userEmail as string | undefined;
 
     if (!userId) {
@@ -90,6 +92,7 @@ route.get("/me", async (req: Request, res: Response) => {
 // GET /api/account/orders
 route.get("/orders", async (req: Request, res: Response) => {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (req as any).userId as string | undefined;
 
     if (!userId) {

@@ -27,7 +27,7 @@ export const getOrderById = async (id: string, customerId?: string) => {
       return null;
     }
 
-    // Ownership check — customer can only see their own orders
+    // Ownership check â€” customer can only see their own orders
     if (customerId && order.customerId !== customerId) {
       logger.warn(`Ownership check failed: customer ${customerId} tried to access order ${id} belonging to ${order.customerId}`);
       return null;
@@ -55,7 +55,7 @@ export const cancelOrder = async (id: string, customerId?: string) => {
         return { success: false, message: `Order with ID ${id} not found.` };
       }
 
-      // Ownership check — only order owner can cancel
+      // Ownership check â€” only order owner can cancel
       if (customerId && order.customerId !== customerId) {
         logger.warn(`Ownership check failed: customer ${customerId} tried to cancel order ${id} belonging to ${order.customerId}`);
         return { 
@@ -127,7 +127,7 @@ export const processRefund = async (
       return { success: false, message: `Order with ID ${id} not found.` };
     }
 
-    // Ownership check — only order owner can request refund
+    // Ownership check â€” only order owner can request refund
     if (customerId && order.customerId !== customerId) {
       logger.warn(`Ownership check failed: customer ${customerId} tried to refund order ${id} belonging to ${order.customerId}`);
       return { 

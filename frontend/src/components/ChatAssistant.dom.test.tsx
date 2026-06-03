@@ -27,7 +27,7 @@ function renderChat() {
 }
 
 // --- TESTS ------------------------------------------------------------
-describe('ChatAssistant — DOM Interactions', () => {
+describe('ChatAssistant â€” DOM Interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockHealthResult = { success: true, status: 'healthy', timestamp: new Date().toISOString() };

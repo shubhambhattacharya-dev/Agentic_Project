@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import { chatController } from '../controllers/chat.controller.js';
 import { clerkAuthMiddleware } from '../middleware/auth.js';
 

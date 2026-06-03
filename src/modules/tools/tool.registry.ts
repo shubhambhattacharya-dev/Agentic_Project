@@ -1,4 +1,4 @@
-﻿// src/modules/tools/tool.registry.ts
+// src/modules/tools/tool.registry.ts
 import { z, ZodIssue } from 'zod';
 import { ToolDefinition, ToolExecutionResult, ToolSecurityError } from './tool.types.js';
 import { logger } from '../../config/logger.js';

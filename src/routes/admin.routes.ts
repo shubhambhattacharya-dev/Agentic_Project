@@ -36,6 +36,7 @@ route.get("/refunds/pending", async (_req: Request, res: Response) => {
 route.post("/refunds/:id/approve", async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminUserId = (req as any).userId as string;
 
     const refund = await prisma.refundRequest.findUnique({
@@ -78,6 +79,7 @@ route.post("/refunds/:id/approve", async (req: Request, res: Response) => {
 route.post("/refunds/:id/reject", async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminUserId = (req as any).userId as string;
     const refund = await prisma.refundRequest.findUnique({ where: { id } });
 

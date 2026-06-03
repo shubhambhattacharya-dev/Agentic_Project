@@ -7,7 +7,7 @@ import { env } from "../config/env.js";
 
 const route = express.Router();
 
-// Clerk webhook endpoint — syncs users to database
+// Clerk webhook endpoint â€” syncs users to database
 route.post("/clerk-webhook", express.raw({ type: "application/json" }), async (req: Request, res: Response) => {
   const WEBHOOK_SECRET = env.CLERK_WEBHOOK_SECRET;
 
@@ -108,7 +108,7 @@ route.post("/clerk-webhook", express.raw({ type: "application/json" }), async (r
 
       case "user.deleted": {
         const clerkUserId = data.id as string;
-        // Don't delete customer — just remove clerkId
+        // Don't delete customer â€” just remove clerkId
         await prisma.customer.updateMany({
           where: { clerkId: clerkUserId },
           data: { clerkId: null },
