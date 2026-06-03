@@ -1,9 +1,9 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FiCheck, FiX, FiUsers, FiDollarSign, FiClock, FiPackage, FiCpu } from "react-icons/fi";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 async function fetchWithAuth(path: string, token: string, init?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
