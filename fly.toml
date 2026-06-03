@@ -1,0 +1,34 @@
+# fly.toml - Fly.io config for GIGI Energy backend
+app = "agentic-project"
+primary_region = "ams"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  GROQ_MODEL_LLM = "llama-3.3-70b-versatile"
+  GROQ_MODEL_SLM = "llama-3.1-8b-instant"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
