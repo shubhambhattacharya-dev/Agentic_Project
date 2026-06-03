@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -21,7 +21,7 @@ const app = express();
 initSentry();
 
 // 3. Security headers
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" }, crossOriginOpenerPolicy: { policy: "unsafe-none" } }));
 
 // 4. Global Rate Limiting
 const limiter = rateLimit({
@@ -39,7 +39,7 @@ app.use(limiter);
 // 5. CORS
 app.use(
   cors({
-    origin: env.ALLOWED_ORIGINS === "*" ? "*" : env.ALLOWED_ORIGINS.split(","),
+    origin: env.ALLOWED_ORIGINS === "*" ? true : env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()),
     methods: ["GET", "POST"],
     credentials: true,
   })

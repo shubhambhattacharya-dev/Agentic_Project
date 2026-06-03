@@ -1,5 +1,5 @@
-/* ============================================================
-   GIGI ENERGY — MONSTER/REDBULL INSPIRED
+﻿/* ============================================================
+   GIGI ENERGY â€” MONSTER/REDBULL INSPIRED
    Black + Electric Green. Bold. Aggressive. High-Energy.
    ============================================================ */
 :root {
@@ -1552,7 +1552,7 @@ a.site-logo:hover {
 }
 
 .chat-assistant__header .is-online { color: var(--accent); }
-.chat-assistant__header .is-offline { color: #ef4444; }
+.chat-assistant__header .is-offline { color: var(--fg-muted); }
 .chat-assistant__header .button--icon { color: var(--fg-dim); }
 .chat-assistant__header .button--icon:hover { color: var(--fg); }
 
@@ -1649,7 +1649,7 @@ a.site-logo:hover {
 }
 
 /* ============================================================
-   3D EFFECTS — RED BULL STYLE
+   3D EFFECTS â€” RED BULL STYLE
    ============================================================ */
 
 /* Mouse spotlight glow */
@@ -1746,12 +1746,12 @@ a.site-logo:hover {
   transform: translateZ(6px) translateY(-2px);
 }
 
-/* Depth of field — blur background elements when hero is in view */
+/* Depth of field â€” blur background elements when hero is in view */
 .hero ~ .logo-band {
   transition: filter 0.5s var(--ease);
 }
 
-/* 3D section headings — subtle depth */
+/* 3D section headings â€” subtle depth */
 .section__heading h2 {
   transform: translateZ(0);
   transition: transform 0.5s var(--ease);
@@ -2081,3 +2081,4 @@ a.site-logo:hover {
   background: rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
+

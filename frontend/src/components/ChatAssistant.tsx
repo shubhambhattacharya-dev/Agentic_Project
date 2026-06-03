@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+﻿import { FormEvent, useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FiMessageCircle, FiSend, FiWifi, FiX } from "react-icons/fi";
@@ -28,6 +28,8 @@ export function ChatAssistant() {
     queryKey: ["api-health"],
     queryFn: getHealth,
     refetchInterval: 30000,
+    retry: 1,
+    staleTime: 15000,
   });
 
   const chat = useMutation({
@@ -64,6 +66,7 @@ export function ChatAssistant() {
   });
 
   const isHealthy = health.data?.success && health.data.status === "healthy";
+  const isChecking = health.isLoading;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,9 +89,9 @@ export function ChatAssistant() {
           <div className="chat-assistant__header">
             <div>
               <h2>GIGI Support</h2>
-              <span className={isHealthy ? "is-online" : "is-offline"}>
+              <span className={isHealthy ? "is-online" : isChecking ? "is-online" : "is-offline"}>
                 <FiWifi />
-                {isHealthy ? "Backend connected" : "Backend unavailable"}
+                {isHealthy ? "Online" : isChecking ? "Connecting..." : "Reconnecting..."}
               </span>
             </div>
             <Button variant="icon" size="icon" aria-label="Close chat" onClick={() => setOpen(false)}>
