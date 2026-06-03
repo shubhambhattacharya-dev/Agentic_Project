@@ -1,0 +1,31 @@
+﻿# render.yaml — Render Blueprint for Agentic_Project
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: agentic-project
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GROQ_API
+        sync: false
+      - key: GROQ_MODEL_LLM
+        sync: false
+      - key: GROQ_MODEL_SLM
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
