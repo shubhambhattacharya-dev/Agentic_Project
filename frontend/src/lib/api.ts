@@ -21,8 +21,11 @@ export type ChatResponse = {
   };
 };
 
+// In production (Vercel), VITE_API_URL points to the deployed backend.
+// In dev, Vite proxy handles /api → localhost:5000, so we use same-origin.
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  // Merge headers properly — init.headers must NOT overwrite Content-Type
   const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...((init?.headers as Record<string, string>) ?? {}),
@@ -30,7 +33,7 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 
   const { headers: _unused, ...restInit } = init ?? {}; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     headers: mergedHeaders,
     ...restInit,
   });
