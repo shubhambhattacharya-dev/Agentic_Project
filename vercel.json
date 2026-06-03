@@ -1,0 +1,8 @@
+﻿{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://gigi-energy-bot.onrender.com/api/$1"
+    }
+  ]
+}
