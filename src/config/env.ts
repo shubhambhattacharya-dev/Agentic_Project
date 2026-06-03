@@ -1,4 +1,4 @@
-ï»¿import "dotenv/config"
+import "dotenv/config"
 import {z} from 'zod'
 
 const envSchema = z.object({
@@ -28,13 +28,31 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env)
 
 if (!parsed.success) {
-    console.error("Environment validation failed !! check your .env file")
-    console.error(parsed.error.format())
-    process.exit(1)
+    if (process.env.NODE_ENV === "test") {
+        console.warn("Running in test mode with missing env vars — using defaults")
+    } else {
+        console.error("Environment validation failed !! check your .env file")
+        console.error(parsed.error.format())
+        process.exit(1)
+    }
 }
 
 if (parsed.data.NODE_ENV === "production" && !parsed.data.CLERK_SECRET_KEY) {
     console.warn("WARNING: CLERK_SECRET_KEY is not set. Authentication will not work in production!")
 }
 
-export const env = parsed.data
+// In test mode with validation failure, provide safe defaults
+export const env = parsed.success ? parsed.data : {
+    GROQ_API: "gsk_test_mock",
+    GROQ_MODEL_LLM: "llama-3.3-70b-versatile",
+    GROQ_MODEL_SLM: "llama-3.1-8b-instant",
+    PORT: 0,
+    NODE_ENV: "test" as const,
+    ALLOWED_ORIGINS: "*",
+    LOG_LEVEL: "silent",
+    DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+    CLERK_PUBLISHABLE_KEY: "",
+    CLERK_SECRET_KEY: "",
+    CLERK_WEBHOOK_SECRET: "",
+    SENTRY_DSN: "",
+}

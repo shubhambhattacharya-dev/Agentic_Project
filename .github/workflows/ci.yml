@@ -1,4 +1,4 @@
-﻿name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: TypeScript check (frontend)
-        run: npx tsc --noEmit --prefix frontend
+        run: cd frontend && npx tsc --noEmit
 
       - name: ESLint (backend)
         run: npx eslint src/ --max-warnings=0
@@ -60,6 +60,11 @@ jobs:
         run: npx vitest run --config vitest.config.ts
         env:
           NODE_ENV: test
+          GROQ_API: gsk_test_mock_key_for_ci
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          CLERK_SECRET_KEY: sk_test_mock
+          CLERK_PUBLISHABLE_KEY: pk_test_mock
+          CLERK_WEBHOOK_SECRET: whsec_test_mock
 
   test-frontend:
     name: Frontend Tests
