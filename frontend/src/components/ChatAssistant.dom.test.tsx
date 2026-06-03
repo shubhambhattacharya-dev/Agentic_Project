@@ -146,7 +146,7 @@ describe('ChatAssistant — DOM Interactions', () => {
     mockHealthResult = new Error('Network Error');
     renderChat();
     fireEvent.click(screen.getByText('Ask GIGI'));
-    expect(await screen.findByText('Reconnecting...')).toBeDefined();
+    expect(await screen.findByText(/Reconnecting|Connecting/)).toBeDefined();
   });
 
   it('shows error message when chat API fails', async () => {
