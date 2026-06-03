@@ -1,3 +1,4 @@
+// Build: 2026-06-03 21.40.50
 export type UiChatMessage = {
   role: "user" | "assistant";
   content: string;
