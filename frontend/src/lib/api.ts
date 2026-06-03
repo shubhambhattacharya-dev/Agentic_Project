@@ -25,7 +25,7 @@ export type ChatResponse = {
 // In dev, Vite proxy handles /api → localhost:5000, so we use same-origin.
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...((init?.headers as Record<string, string>) ?? {}),

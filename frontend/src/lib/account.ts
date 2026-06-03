@@ -1,5 +1,4 @@
-// frontend/src/lib/account.ts
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+import { apiRequest } from "@/lib/api";
 
 export type AccountData = {
   id: string;
@@ -11,10 +10,8 @@ export type AccountData = {
 };
 
 export async function getAccount(token: string): Promise<AccountData> {
-  const res = await fetch(`${API_BASE}/account/me`, {
+  const data = await apiRequest<{ data: AccountData }>("/api/account/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch account");
-  const data = await res.json();
   return data.data;
 }
