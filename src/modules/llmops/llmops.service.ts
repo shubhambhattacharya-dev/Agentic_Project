@@ -3,8 +3,8 @@
 import { get_encoding } from "tiktoken";
 import { z } from "zod";
 import { logger } from "../../config/logger.js";
+import { prisma } from "../../config/db.js";
 
-// 🚀 Production Rule 1: Dollar to INR Exchange Rate
 const USD_TO_INR = 85;
 
 const PRICING: Record<string, { input: number; output: number }> = {
@@ -14,28 +14,24 @@ const PRICING: Record<string, { input: number; output: number }> = {
   "default": { input: 0.59, output: 0.79 },
 };
 
-
 export const TokenUsageReportSchema = z.object({
-  promptTokens: z.number().int().nonnegative("Input tokens cannot be negative"),
-  completionTokens: z.number().int().nonnegative("Output tokens cannot be negative"),
-  totalTokens: z.number().int().nonnegative("Total tokens cannot be negative"),
-  costUSD: z.number().nonnegative("Cost in USD cannot be negative"),
-  costINR: z.number().nonnegative("Cost in INR cannot be negative"),
+  promptTokens: z.number().int().nonnegative(),
+  completionTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+  costUSD: z.number().nonnegative(),
+  costINR: z.number().nonnegative(),
 });
 
 export type TokenUsageReport = z.infer<typeof TokenUsageReportSchema>;
 
-
 export function countTokensLocal(text: string): number {
   const encoder = get_encoding("cl100k_base");
   try {
-    const tokens = encoder.encode(text);
-    return tokens.length;
+    return encoder.encode(text).length;
   } finally {
-    encoder.free(); // Free WebAssembly memory
+    encoder.free();
   }
 }
-
 
 export function calculateCost(
   model: string,
@@ -48,7 +44,7 @@ export function calculateCost(
   if (cleanModel.includes("70b")) {
     rates = PRICING["llama-3.3-70b-versatile"];
   } else if (cleanModel.includes("8b")) {
-    rates = PRICING["llama-3.3-8b-instant"];
+    rates = PRICING["llama-3.1-8b-instant"];
   }
 
   const promptCostUSD = (promptTokens / 1_000_000) * rates.input;
@@ -56,21 +52,15 @@ export function calculateCost(
   const totalCostUSD = promptCostUSD + completionCostUSD;
   const totalCostINR = totalCostUSD * USD_TO_INR;
 
-  const rawReport = {
+  return TokenUsageReportSchema.parse({
     promptTokens,
     completionTokens,
     totalTokens: promptTokens + completionTokens,
     costUSD: parseFloat(totalCostUSD.toFixed(6)),
     costINR: parseFloat(totalCostINR.toFixed(4)),
-  };
-
-  // 🚀 Zod Validation check on internal output before returning
-  return TokenUsageReportSchema.parse(rawReport);
+  });
 }
 
-/**
- * Production logging utility to print LLM consumption metrics
- */
 export function logLLMUsage(
   model: string,
   promptTokens: number,
@@ -91,8 +81,38 @@ export function logLLMUsage(
         costINR: report.costINR,
       },
     },
-    `📊 LLMOps Metrics [${typeLabel}] - ${model} consumption calculated`
+    `LLMOps Metrics [${typeLabel}] - ${model}`
   );
 
   return report;
+}
+
+// Save LLMOps metric to database
+export async function saveLLMOpsMetric(data: {
+  sessionId: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  costUSD: number;
+  costINR: number;
+  latencyMs: number;
+}): Promise<void> {
+  try {
+    await prisma.lLMOpsMetric.create({
+      data: {
+        sessionId: data.sessionId,
+        model: data.model,
+        promptTokens: data.promptTokens,
+        completionTokens: data.completionTokens,
+        totalTokens: data.totalTokens,
+        costUSD: data.costUSD,
+        costINR: data.costINR,
+        latencyMs: data.latencyMs,
+      },
+    });
+    logger.info(`LLMOps metric saved to DB for session ${data.sessionId}`);
+  } catch (error) {
+    logger.warn(error, 'Failed to save LLMOps metric to DB');
+  }
 }

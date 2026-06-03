@@ -9,6 +9,8 @@ export type HealthResponse = {
   database?: "connected" | "disconnected";
   message?: string;
   timestamp: string;
+  sentry?: string;
+  clerk?: string;
 };
 
 export type ChatResponse = {
@@ -20,12 +22,17 @@ export type ChatResponse = {
 };
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  // Merge headers properly — init.headers must NOT overwrite Content-Type
+  const mergedHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string>) ?? {}),
+  };
+
+  const { headers: _unused, ...restInit } = init ?? {}; // eslint-disable-line @typescript-eslint/no-unused-vars
+
   const response = await fetch(path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-    ...init,
+    headers: mergedHeaders,
+    ...restInit,
   });
 
   const payload = (await response.json().catch(() => null)) as
@@ -46,9 +53,20 @@ export function getHealth() {
 export function sendChatMessage(input: {
   sessionId: string;
   messages: UiChatMessage[];
+  token?: string;
 }) {
+  const headers: Record<string, string> = {};
+
+  if (input.token) {
+    headers["Authorization"] = `Bearer ${input.token}`;
+  }
+
   return apiRequest<ChatResponse>("/api/chat", {
     method: "POST",
-    body: JSON.stringify(input),
+    headers,
+    body: JSON.stringify({
+      sessionId: input.sessionId,
+      messages: input.messages,
+    }),
   });
 }

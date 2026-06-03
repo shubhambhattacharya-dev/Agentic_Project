@@ -6,8 +6,9 @@ import { OrderStatus } from "@prisma/client";
 
 /**
  * Retrieve details and status of a specific order by its ID.
+ * Only returns the order if it belongs to the requesting customer.
  */
-export const getOrderById = async (id: string) => {
+export const getOrderById = async (id: string, customerId?: string) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: id.toLowerCase() },
@@ -21,6 +22,17 @@ export const getOrderById = async (id: string) => {
         refunds: true
       }
     });
+
+    if (!order) {
+      return null;
+    }
+
+    // Ownership check — customer can only see their own orders
+    if (customerId && order.customerId !== customerId) {
+      logger.warn(`Ownership check failed: customer ${customerId} tried to access order ${id} belonging to ${order.customerId}`);
+      return null;
+    }
+
     return order;
   } catch (error) {
     logger.error(error, `Error fetching order ${id}`);
@@ -31,7 +43,7 @@ export const getOrderById = async (id: string) => {
 /**
  * Cancel a D2C order by its ID with status and ownership validation.
  */
-export const cancelOrder = async (id: string) => {
+export const cancelOrder = async (id: string, customerId?: string) => {
   try {
     return await prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({
@@ -41,6 +53,15 @@ export const cancelOrder = async (id: string) => {
 
       if (!order) {
         return { success: false, message: `Order with ID ${id} not found.` };
+      }
+
+      // Ownership check — only order owner can cancel
+      if (customerId && order.customerId !== customerId) {
+        logger.warn(`Ownership check failed: customer ${customerId} tried to cancel order ${id} belonging to ${order.customerId}`);
+        return { 
+          success: false, 
+          message: "You are not authorized to cancel this order. This order belongs to another customer." 
+        };
       }
 
       if (order.status === "CANCELLED") {
@@ -89,12 +110,13 @@ export const cancelOrder = async (id: string) => {
 };
 
 /**
- * Process a refund request with auto-approval logic and database persistence.
+ * Process a refund request with auto-approval logic and ownership validation.
  */
 export const processRefund = async (
   id: string,
   reason: string,
-  damageClaim: boolean
+  damageClaim: boolean,
+  customerId?: string
 ) => {
   try {
     const order = await prisma.order.findUnique({
@@ -103,6 +125,15 @@ export const processRefund = async (
 
     if (!order) {
       return { success: false, message: `Order with ID ${id} not found.` };
+    }
+
+    // Ownership check — only order owner can request refund
+    if (customerId && order.customerId !== customerId) {
+      logger.warn(`Ownership check failed: customer ${customerId} tried to refund order ${id} belonging to ${order.customerId}`);
+      return { 
+        success: false, 
+        message: "You are not authorized to request a refund for this order." 
+      };
     }
 
     if (order.status === "REFUNDED") {
@@ -122,13 +153,13 @@ export const processRefund = async (
     
     // Business Rule: damaged + amount < 500 -> auto approve
     let finalStatus: OrderStatus = "REFUND_PENDING_APPROVAL";
-    let message = `Refund of ₹${totalAmount} requires manual Admin approval. Marked as PENDING.`;
+    let message = `Refund of ?${totalAmount} requires manual Admin approval. Marked as PENDING.`;
     let refundRequestStatus: 'PENDING' | 'APPROVED' = 'PENDING';
 
     if (damageClaim && totalAmount < 500) {
       finalStatus = "REFUNDED";
       refundRequestStatus = 'APPROVED';
-      message = `Refund of ₹${totalAmount} approved automatically (damaged item, under ₹500 threshold).`;
+      message = `Refund of ?${totalAmount} approved automatically (damaged item, under ?500 threshold).`;
     }
 
     // Create refund request and update order status in transaction

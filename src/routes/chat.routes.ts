@@ -1,11 +1,10 @@
-import express from 'express'
-
+import express from 'express';
 import { chatController } from '../controllers/chat.controller.js';
+import { clerkAuthMiddleware } from '../middleware/auth.js';
 
+const route = express.Router();
 
-
-const route=express.Router();
-
-route.post("/chat", chatController)
+// POST /api/chat — requires Clerk authentication
+route.post("/chat", clerkAuthMiddleware, chatController);
 
 export default route;

@@ -1,6 +1,6 @@
 import { ErrorRequestHandler } from "express";
+import * as Sentry from "@sentry/node";
 import { logger } from "../config/logger.js";
-import { env } from "../config/env.js";
 
 export interface AppError extends Error {
   status?: number;
@@ -13,6 +13,11 @@ export interface AppError extends Error {
 export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, _next) => {
   logger.error(err, `[SERVER ERROR]: ${err.message}`);
 
+  // Report to Sentry (non-operational errors)
+  if (!err.isOperational) {
+    Sentry.captureException(err);
+  }
+
   const isMalformedJson =
     err instanceof SyntaxError &&
     err.type === "entity.parse.failed" &&
@@ -20,13 +25,17 @@ export const errorHandler: ErrorRequestHandler = (err: AppError, req, res, _next
 
   const statusCode = isMalformedJson ? 400 : err.statusCode || err.status || 500;
 
-  // Mask 500 errors in production to avoid leaking details
-  const isProd = env.NODE_ENV === "production";
+  // Never leak internal paths or stack traces to the client
+  const safeMessage = (msg: string): string => {
+    // Strip Windows/Unix file paths from error messages
+    return msg.replace(/[A-Z]:\\[^\s]+/g, "[path]").replace(/\/[a-z]+\/[^\s]+/g, "[path]");
+  };
+
   const errorMessage = isMalformedJson
     ? "Malformed JSON request body. Use valid JSON with double-quoted property names."
-    : isProd && statusCode === 500
+    : statusCode >= 500
       ? "Internal Server Error"
-      : err.message || "Something went wrong";
+      : safeMessage(err.message) || "Something went wrong";
 
   res.status(statusCode).json({
     success: false,

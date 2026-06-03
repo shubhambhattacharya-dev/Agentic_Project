@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   FiInstagram,
@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatAssistant } from "@/components/ChatAssistant";
+import { AdminDashboard } from "@/components/AdminDashboard";
+import { UserNav } from "@/components/UserNav";
 import { getStorefront, type Product } from "@/lib/storefront-data";
 
 type CartItem = {
@@ -84,7 +86,7 @@ function useReveal() {
   return ref;
 }
 
-/* 3D tilt on hover — Red Bull style card perspective */
+/* 3D tilt on hover â€” Red Bull style card perspective */
 function useTilt() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -110,7 +112,7 @@ function useTilt() {
 }
 
 
-/* Global 3D mouse glow — spotlight that follows cursor */
+/* Global 3D mouse glow â€” spotlight that follows cursor */
 function useMouseGlow() {
   useEffect(() => {
     const glow = document.createElement("div");
@@ -136,6 +138,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -212,6 +215,16 @@ function App() {
         onQuantity={updateQuantity}
       />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <UserNav onAdminToggle={setShowAdmin} />
+      {showAdmin && (
+        <div className="admin-overlay">
+          <div className="admin-overlay__backdrop" onClick={() => setShowAdmin(false)} />
+          <div className="admin-overlay__panel">
+            <button className="admin-close" onClick={() => setShowAdmin(false)}>&times;</button>
+            <AdminDashboard />
+          </div>
+        </div>
+      )}
       <ChatAssistant />
       <a className="whatsapp-float" href="https://www.whatsapp.com" aria-label="Shop on WhatsApp">
         <FiZap />
@@ -327,7 +340,22 @@ function HeroCarousel({ slides }: { slides: Awaited<ReturnType<typeof getStorefr
             className={heroIndex === index ? "is-active" : ""}
           />
         ))}
-
+        <button
+          type="button"
+          className="hero__arrow hero__arrow--prev"
+          onClick={() => setIndex((current) => (current - 1 + slides.length) % slides.length)}
+          aria-label="Previous slide"
+        >
+          â€¹
+        </button>
+        <button
+          type="button"
+          className="hero__arrow hero__arrow--next"
+          onClick={() => setIndex((current) => (current + 1) % slides.length)}
+          aria-label="Next slide"
+        >
+          â€º
+        </button>
       </div>
       <div className="hero__copy">
         <Badge tone={slide.accent === "yellow" ? "yellow" : "lime"}>{slide.eyebrow}</Badge>
