@@ -10,10 +10,10 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('ðŸŒ± Starting database seeding...');
 
   // 1. Clean existing data in order of dependency
-  console.log('🧹 Clearing existing data...');
+  console.log('ðŸ§¹ Clearing existing data...');
   await prisma.orderItem.deleteMany();
   await prisma.refundRequest.deleteMany();
   await prisma.order.deleteMany();
@@ -24,12 +24,12 @@ async function main() {
   await prisma.customer.deleteMany();
 
   // 2. Create Customers
-  console.log('👤 Seeding Customers...');
+  console.log('ðŸ‘¤ Seeding Customers...');
   const customers = [
     {
       id: 'cust-001',
       name: 'Shubham Bhattacharya',
-      email: 'shubham@example.com',
+      email: process.env.ADMIN_EMAIL || 'shubham@example.com',
       role: 'ADMIN' as const,  // Admin user
     },
     {
@@ -51,7 +51,7 @@ async function main() {
   }
 
   // 3. Create Products
-  console.log('🥤 Seeding Products...');
+  console.log('ðŸ¥¤ Seeding Products...');
   const products = [
     {
       id: 'p1',
@@ -78,7 +78,7 @@ async function main() {
   }
 
   // 4. Create Orders
-  console.log('📦 Seeding Orders...');
+  console.log('ðŸ“¦ Seeding Orders...');
   const orders = [
     {
       id: 'gigi-101',
@@ -134,24 +134,24 @@ async function main() {
     });
   }
 
-  console.log('✅ Seeding completed successfully!');
+  console.log('âœ… Seeding completed successfully!');
   console.log('');
-  console.log('📋 Seeded Data Summary:');
+  console.log('ðŸ“‹ Seeded Data Summary:');
   console.log('  - 3 customers (1 admin, 2 regular)');
   console.log('  - 3 products (Lemon Lime, Pineapple Coconut, Trial Pack)');
   console.log('  - 4 orders (PLACED, SHIPPED, DELIVERED x2)');
   console.log('');
-  console.log('🔑 Admin Account:');
+  console.log('ðŸ”‘ Admin Account:');
   console.log('  - Email: shubham@example.com');
   console.log('  - Role: ADMIN');
   console.log('');
-  console.log('💡 To make a Clerk user admin, update their role in the database:');
+  console.log('ðŸ’¡ To make a Clerk user admin, update their role in the database:');
   console.log('  UPDATE customers SET role = \'ADMIN\' WHERE email = \'your-email@example.com\';');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    console.error('âŒ Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {
