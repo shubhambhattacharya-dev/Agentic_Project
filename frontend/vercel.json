@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://gigi-backend.onrender.com/api/$1"
+      "destination": "https://agentic-project.fly.dev/api/$1"
     }
   ]
 }
